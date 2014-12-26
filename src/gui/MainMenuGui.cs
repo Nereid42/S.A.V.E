@@ -194,9 +194,26 @@ namespace Nereid
                GUILayout.BeginHorizontal();
                GUILayout.Label(set.name, STYLE_BACKUPSET_NAME);
                GUILayout.Label(set.status.ToString(), STYLE_BACKUPSET_STATUS);
-               GUILayout.Button("Restore", STYLE_RECOVER_BUTTON);
+               if(GUILayout.Button("Restore", STYLE_RECOVER_BUTTON))
+               {
+                  String[] sets = SAVE.manager.GetBackupSetNameArray();
+                  selectedGameToRestore = IndexOf(set.name, sets);
+                  display = DISPLAY.RESTORE;
+               }
                GUILayout.EndHorizontal();
             }
+         }
+
+         private int IndexOf(String s, String[] a)
+         {
+            for(int i=0; i<a.Length; i++)
+            {
+               if (a[i].Equals(s))
+               {
+                  return i;
+               }
+            }
+            return 0;
          }
 
          private void DisplayConfigure()
