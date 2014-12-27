@@ -155,7 +155,6 @@ namespace Nereid
             String[] games = SAVE.manager.GetBackupSetNameArray();
 
             GUILayout.BeginVertical();
-            DrawTitle("Restore game");
             gameListscrollPosition = GUILayout.BeginScrollView(gameListscrollPosition, GUI.skin.box, GUILayout.Height(105));
             selectedGameToRestore = GUILayout.SelectionGrid(selectedGameToRestore, games, 1);
             GUILayout.EndScrollView();
@@ -206,12 +205,19 @@ namespace Nereid
 
          private int IndexOf(String s, String[] a)
          {
-            for(int i=0; i<a.Length; i++)
+            try
             {
-               if (a[i].Equals(s))
+               for (int i = 0; i < a.Length; i++)
                {
-                  return i;
+                  if (a[i].Equals(s))
+                  {
+                     return i;
+                  }
                }
+            }
+            catch
+            {
+               Log.Error("internal error in IndexOf "+s+", a["+a.Length+"]");
             }
             return 0;
          }

@@ -14,7 +14,6 @@ namespace Nereid
 
          static SAVE()
          {
-            //configuration = new Configuration();
          }
 
          private MainMenuGui gui;
@@ -47,13 +46,13 @@ namespace Nereid
 
          private void RegisterEvents()
          {
+            Log.Info("registering events");
             GameEvents.onGameStateSaved.Add(manager.CallbackGameSaved);
             GameEvents.onGameSceneLoadRequested.Add(this.CallbackGameSceneLoadRequested);
          }
 
          private void CallbackGameSceneLoadRequested(GameScenes scene)
          {
-            Log.Info("SAVE::onGameSceneLoadRequested ");
             this.gui.SetVisible(scene == GameScenes.MAINMENU);         
          }
 

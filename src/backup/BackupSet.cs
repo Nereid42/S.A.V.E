@@ -47,7 +47,7 @@ namespace Nereid
 
          public override string ToString()
          {
-            return "backup Set " + name + " for " + pathSaveGame;
+            return "backup set " + name + " for " + pathSaveGame;
          }
 
          public int CompareTo(BackupSet right)
@@ -71,11 +71,7 @@ namespace Nereid
                int hours = int.Parse(hh);
                int minutes = int.Parse(mi);
                int seconds = int.Parse(ss);
-               DateTime t = new DateTime(year, month, day, hours, minutes, seconds);
-
-               Log.Test(folder + " -> "+t);
-
-               return t;
+               return new DateTime(year, month, day, hours, minutes, seconds);
             }
             catch(FormatException)
             {
@@ -109,9 +105,7 @@ namespace Nereid
             for (int i = 0; i < backupFolders.Length; i++)
             {
                String folder = backupFolders[i];
-
                String backupName = Path.GetFileName(folder);
-               Log.Test("scanning backup "+backupName+" for game "+name);
                if (File.Exists(folder + "/" + OK_FILE))
                {
                   if (!backupName.EndsWith("-R"))
@@ -149,20 +143,27 @@ namespace Nereid
 
          private void CreateBackupArray()
          {
-            int offset = prerestore.Count > 0 ? 1 : 0;
-            int cnt = backups.Count +offset;
-            String[] newArray = new String[cnt];
-            if(prerestore.Count>0)
+            try
             {
-               backupArray[1] = "UNDO RESTORE";
+               int offset = prerestore.Count > 0 ? 1 : 0;
+               int cnt = backups.Count + offset;
+               String[] newArray = new String[cnt];
+               if (prerestore.Count > 0)
+               {
+                  newArray[0] = "UNDO RESTORE";
+               }
+               int i = 0;
+               foreach (String name in backups)
+               {
+                  newArray[i + offset] = name;
+                  i++;
+               }
+               backupArray = newArray;
             }
-            int i = 0;
-            foreach (String name in backups)
+            catch(Exception e)
             {
-               backupArray[i + offset] = name;
-               i++;
+               Log.Error("failed to create backup array: "+e.Message);
             }
-            backupArray = newArray;
          }
 
          public String[] GetBackupsAsArray()
@@ -178,6 +179,7 @@ namespace Nereid
             Log.Info("creating backup of save game '" + name + "' in '" + backupRootFolder + "'");
             if (!Directory.Exists(backupRootFolder))
             {
+               Log.Info("creating root backup folder " + backupRootFolder);
                Directory.CreateDirectory(backupRootFolder);
             }
 
@@ -191,7 +193,7 @@ namespace Nereid
             }
             else
             {
-               Log.Warning("backup folder already existing");
+               Log.Warning("backup folder '"+backupFolder+"' already existing");
                return backupFolder;
             }
 
@@ -203,9 +205,9 @@ namespace Nereid
                {
                   File.Copy(sourceFile, backupFolder + "/" + filename);
                }
-               catch
+               catch(Exception e)
                {
-                  Log.Error("failed to create backup of file " + sourceFile + " in " + backupFolder);
+                  Log.Error("failed to create backup of file " + sourceFile + " in " + backupFolder+": "+e.Message);
                   status = STATUS.FAILED;
                   return backupFolder;
                }
@@ -236,6 +238,7 @@ namespace Nereid
 
          private void DeleteSaveGameFiles()
          {
+            Log.Info("deleting save game files");
             foreach (String file in Directory.GetFiles(pathSaveGame))
             {
                try
@@ -287,7 +290,7 @@ namespace Nereid
                if(folder.EndsWith("-R"))
                {
                   Log.Info("delting folder "+folder);
-                  //Directory.Delete(folder);
+                  Directory.Delete(folder);
                }
             }
 
@@ -318,6 +321,49 @@ namespace Nereid
                Log.Error("save game is corrupted; restore failed");
                status = STATUS.CORRUPT;
             }
+         }
+
+         public void Cleanup()
+         {
+            Log.Info("cleaning up backup "+name);
+
+            int minNumberOfBackups = SAVE.configuration.minNumberOfBackups;
+            int maxNumberOfBackups = SAVE.configuration.maxNumberOfBackups;
+            int daysToKeepBackups = SAVE.configuration.daysToKeepBackups;
+
+            // no cleanup (keep all backups forever?)
+            if ( maxNumberOfBackups==0 && daysToKeepBackups==0)
+            {
+               return;
+            }
+
+            String[] backupFolders = GetBackupFolders();
+            DateTime timeOfObsoleteBackups = DateTime.Now.AddDays(-daysToKeepBackups);
+
+            int totalBackupCount = backupFolders.Length;
+
+            for (int i = 0; i < totalBackupCount - minNumberOfBackups; i++)
+            {
+               String folder = backupFolders[i];
+               String backupName = Path.GetFileName(folder);
+               DateTime t = GetBackupTimeForFolder(backupName);
+               // backup has to be kept, because of time constraints
+               if ( t > timeOfObsoleteBackups && daysToKeepBackups>0 ) continue;
+               // all remaining backups kept because of number constraint
+               if (totalBackupCount - i < maxNumberOfBackups) break;
+               //
+               // delete this backup
+               try
+               {
+                  Directory.Delete(folder);
+                  backups.Remove(backupName);
+               }
+               catch
+               {
+                  Log.Error("failed to cleanup folder "+folder);
+               }
+            }
+            CreateBackupArray();
          }
       }
 

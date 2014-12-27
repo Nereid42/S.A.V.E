@@ -19,7 +19,7 @@ namespace Nereid
 
          // Thread for doing backups...
          private Thread backupThread;
-         // Thread for doing resores...
+         // Thread for doing restores...
          private Thread restoreThread;
          // backup job queue
          private readonly BlockingQueue<BackupJob> backupQueue = new BlockingQueue<BackupJob>();
@@ -34,8 +34,8 @@ namespace Nereid
          public BackupManager()
          {
             Log.Info("new instance of backup manager (save root is "+SAVE_ROOT+")");
-            this.backupThread = new Thread(BackupWork);
-            this.restoreThread = new Thread(RestoreWork);
+            this.backupThread = new Thread(new ThreadStart(this.BackupWork));
+            this.restoreThread = new Thread(new ThreadStart(this.RestoreWork));
          }
 
          public void Start()
@@ -92,7 +92,6 @@ namespace Nereid
 
                   backupSets.Add(set);
                   set.ScanBackups();
-                  Log.Test(set.ToString());
                }
                CreateBackupSetNameArray();
             }
@@ -112,12 +111,19 @@ namespace Nereid
             return null;
          }
 
+
          public void CallbackGameSaved(Game game)
          {
-
-            Log.Info("BackupManager::OnGameSave");
+            Log.Info("BackupManager::OnGameSave "+DateTime.Now+" status="+game.Status+", "+HighLogic.SaveFolder);
             String name = HighLogic.SaveFolder;
             BackupSet set = GetBackupSetForName(name);
+            TimeSpan elapsed = DateTime.Now - set.time;
+            // 
+            if(elapsed.Seconds<=0)
+            {
+               Log.Info("backup already done");
+               return;
+            }
             if(set==null)
             {
                set = new BackupSet(name, SAVE_ROOT + "/" + name);
@@ -129,34 +135,40 @@ namespace Nereid
                CreateBackupSetNameArray();
             }
 
-            TimeSpan elapsed = DateTime.Now - set.time;
 
             Configuration.BACKUP_INTERVAL interval = SAVE.configuration.backupInterval;
             Log.Test("backup interval: " + interval);
+
+            BackupJob job = BackupJob.NO_JOB;
             switch (interval)
             {
                case Configuration.BACKUP_INTERVAL.EACH_SAVE:
                   Log.Test("backup each save");
-                  BackupGame(set);
+                  job = BackupGame(set);
                   break;
                case Configuration.BACKUP_INTERVAL.ONCE_PER_HOUR:
                   if(elapsed.Hours>=1)
                   {
-                     BackupGame(set);
+                     job = BackupGame(set);
                   }
                   break;
                case Configuration.BACKUP_INTERVAL.ONCE_PER_DAY:
                   if (elapsed.Days >= 1)
                   {
-                     BackupGame(set);
+                     job = BackupGame(set);
                   }
                   break;
                case Configuration.BACKUP_INTERVAL.ONCE_PER_WEEK:
                   if (elapsed.Days >= 7)
                   {
-                     BackupGame(set);
+                     job = BackupGame(set);
                   }
                   break;
+            }
+            // wait for job to complete, to avoid concurrency problems 
+            while (!job.IsCompleted() && !stopRequested)
+            {
+               Thread.Sleep(100);
             }
          }
 
@@ -173,24 +185,26 @@ namespace Nereid
             return cnt;
          }
 
-         public void BackupGame(BackupSet set)
+         public BackupJob BackupGame(BackupSet set)
          {
             Log.Info("adding backup job for " + set.name+" ("+backupQueue.Size()+" backups in queue)");
             backupsFinished = false;
             BackupJob job = new BackupJob(set);
             backupQueue.Enqueue(job);
+            return job;
          }
 
-         public void BackupGame(String name)
+         public BackupJob BackupGame(String name)
          {
             BackupSet set = GetBackupSetForName(name);
             if (set != null)
             {
-               BackupGame(set);
+               return BackupGame(set);
             }
             else
             {
                Log.Warning("no backup set '" + name + "' found");
+               return BackupJob.NO_JOB;
             }
          }
 
