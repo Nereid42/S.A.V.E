@@ -127,25 +127,21 @@ namespace Nereid
 
          public void CallbackGameSaved(Game game)
          {
-            Log.Info("BackupManager::OnGameSave "+DateTime.Now+" status="+game.Status+", "+HighLogic.SaveFolder);
             String name = HighLogic.SaveFolder;
             BackupSet set = GetBackupSetForName(name);
-            TimeSpan elapsed = DateTime.Now - set.time;
-            // 
-            if(elapsed.Seconds<=0)
-            {
-               Log.Info("backup already done");
-               return;
-            }
             if(set==null)
             {
                set = new BackupSet(name, SAVE_ROOT + "/" + name);
                backupSets.Add(set);
-               backupSets.Sort(delegate(BackupSet left, BackupSet right)
-                  {
-                     return left.name.CompareTo(right.name);
-                  });
+               SortBackupSets();
                CreateBackupSetNameArray();
+            }
+            TimeSpan elapsed = DateTime.Now - set.time;
+            // 
+            if (elapsed.Seconds <= 0)
+            {
+               Log.Info("backup already done");
+               return;
             }
 
 
@@ -218,6 +214,7 @@ namespace Nereid
                set = new BackupSet(name, SAVE_ROOT + "/" + name);
                backupSets.Add(set);
                SortBackupSets();
+               CreateBackupSetNameArray();
             }
             return BackupGameInBackground(set);
          }
