@@ -377,15 +377,10 @@ namespace Nereid
             {
                String folder = backupFolders[i];
                String backupName = Path.GetFileName(folder);
-               Log.Test("check folder " + backupName);
                DateTime t = GetBackupTimeForFolder(backupName);
-               Log.Test("t = " + t);
                // backup has to be kept, because of time constraints
-               Log.Test("time constraint = " + (t < timeOfObsoleteBackups));
                bool backupObsoleteByTime =  ( t < timeOfObsoleteBackups ) && ( daysToKeepBackups > 0 );
                bool backupObsoleteByNumber =  ( totalBackupCount - i > maxNumberOfBackups ) && ( maxNumberOfBackups > 0 );
-               Log.Test("backupObsoleteByTime = " + backupObsoleteByTime);
-               Log.Test("backupObsoleteByNumber = " + backupObsoleteByNumber);
                if (backupObsoleteByTime || backupObsoleteByNumber)
                {
                   // delete this backup

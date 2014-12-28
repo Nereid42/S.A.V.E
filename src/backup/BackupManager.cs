@@ -141,13 +141,10 @@ namespace Nereid
 
 
             Configuration.BACKUP_INTERVAL interval = SAVE.configuration.backupInterval;
-            Log.Test("backup interval: " + interval);
-
             BackupJob job = BackupJob.NO_JOB;
             switch (interval)
             {
                case Configuration.BACKUP_INTERVAL.EACH_SAVE:
-                  Log.Test("backup each save");
                   job = BackupGameInBackground(set);
                   break;
                case Configuration.BACKUP_INTERVAL.ONCE_PER_HOUR:
