@@ -8,7 +8,7 @@ namespace Nereid
 {
    namespace SAVE
    {
-      class BlockingQueue<T>
+      public class BlockingQueue<T>
       {
          private Queue<T> queue = new Queue<T>();
          readonly object locker = new object();

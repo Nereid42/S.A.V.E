@@ -46,6 +46,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="src\backup\Job.cs" />
     <Compile Include="src\backup\RestoreJob.cs" />
     <Compile Include="src\backup\BackupJob.cs" />
     <Compile Include="src\backup\BackupManager.cs" />

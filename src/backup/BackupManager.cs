@@ -10,6 +10,7 @@ namespace Nereid
    {
       public class BackupManager : IEnumerable<BackupSet>
       {
+         private const int MILLIS_RESTORE_WAIT = 2000;
          private static String SAVE_ROOT = KSPUtil.ApplicationRootPath+"saves";
 
          private List<BackupSet> backupSets = new List<BackupSet>();
@@ -28,8 +29,9 @@ namespace Nereid
          //
          private volatile bool stopRequested = false;
 
-         private volatile bool backupsFinished = true;
-         private volatile bool restoreFinished = true;
+         private volatile bool allBackupsCompleted = true;
+         private volatile bool restoreCompleted = true;
+         private volatile String restoredGame;
 
          public BackupManager()
          {
@@ -59,7 +61,7 @@ namespace Nereid
                BackupJob job = backupQueue.Dequeue();
                Log.Info("executing backup job " + job);
                job.Backup();
-               backupsFinished = backupQueue.Size() == 0;
+               allBackupsCompleted = backupQueue.Size() == 0;
             }
             Log.Info("backup thread terminated");
          }
@@ -72,7 +74,9 @@ namespace Nereid
                RestoreJob job = restoreQueue.Dequeue();
                Log.Info("executing restore job " + job);
                job.Restore();
-               restoreFinished = restoreQueue.Size() == 0;
+               // wait at least 2 seconds;
+               Thread.Sleep(MILLIS_RESTORE_WAIT);
+               restoreCompleted = restoreQueue.Size() == 0;
             }
             Log.Info("restore thread terminated");
          }
@@ -166,6 +170,12 @@ namespace Nereid
                   break;
             }
             // wait for job to complete, to avoid concurrency problems 
+            WaitUntilBackupJobCompleted(job);
+
+         }
+
+         private void WaitUntilBackupJobCompleted(BackupJob job)
+         {
             while (!job.IsCompleted() && !stopRequested)
             {
                Thread.Sleep(100);
@@ -176,7 +186,7 @@ namespace Nereid
          {
             Log.Info("creating backup of all save games");
             int cnt = 0;
-            backupsFinished = false;
+            allBackupsCompleted = false;
             foreach (BackupSet set in backupSets)
             {
                BackupGame(set);
@@ -188,9 +198,10 @@ namespace Nereid
          public BackupJob BackupGame(BackupSet set)
          {
             Log.Info("adding backup job for " + set.name+" ("+backupQueue.Size()+" backups in queue)");
-            backupsFinished = false;
+            allBackupsCompleted = false;
             BackupJob job = new BackupJob(set);
-            backupQueue.Enqueue(job);
+            //backupQueue.Enqueue(job);
+            job.Backup();
             return job;
          }
 
@@ -208,23 +219,35 @@ namespace Nereid
             }
          }
 
-         public void RestoreGame(String name, String from)
+         public bool RestoreGame(String name, String from)
          {
-            if(!restoreFinished)
+            if(!restoreCompleted)
             {
                Log.Warning("restore not complete!");
-               return;
+               return false;
             }
             BackupSet set = GetBackupSetForName(name);
             if (set != null)
             {
-               restoreFinished = false;
-               backupQueue.Enqueue(new BackupJob(set));
+               restoreCompleted = false;
+               restoredGame = name;
+               Log.Warning("restoring game "+name);
+               RestoreJob job = new RestoreJob(set, from);
+               //restoreQueue.Enqueue(job);
+               job.Restore();
+               return true;
             }
             else
             {
                Log.Warning("no backup set '" + name + "' found");
+               return false;
             }
+         }
+
+         public String GetRestoredGame()
+         {
+            if (restoredGame == null) return "none";
+            return restoredGame;
          }
 
 
@@ -250,14 +273,14 @@ namespace Nereid
             return games;
          }
 
-         public bool BackupsFinished()
+         public bool BackupsCompleted()
          {
-            return backupQueue.Size() == 0 && backupsFinished;
+            return backupQueue.Size() == 0 && allBackupsCompleted;
          }
 
-         public bool RestoreFinished()
+         public bool RestoreCompleted()
          {
-            return restoreFinished;
+            return restoreCompleted;
          }
 
 

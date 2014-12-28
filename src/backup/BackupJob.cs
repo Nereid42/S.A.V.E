@@ -7,13 +7,12 @@ namespace Nereid
 {
    namespace SAVE
    {
-      public class BackupJob
+      public class BackupJob : Job
       {
          private readonly BackupSet set;
 
          public static readonly BackupJob NO_JOB = new BackupJob(null);
 
-         private volatile bool completed;
 
          public BackupJob(BackupSet set)
          {
@@ -31,11 +30,6 @@ namespace Nereid
             completed = true;
             // remove obsolete backups
             set.Cleanup();
-         }
-
-         public bool IsCompleted()
-         {
-            return completed;
          }
 
          public override String ToString()

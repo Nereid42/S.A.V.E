@@ -18,7 +18,7 @@ namespace Nereid
          private Vector2 gameListscrollPosition = Vector2.zero;
          private Vector2 backupListscrollPosition = Vector2.zero;
 
-         private enum DISPLAY { HIDDEN = 0, BACKUP = 1, RESTORE = 2, CONFIGURE = 3, STATUS = 4 };
+         private enum DISPLAY { HIDDEN = 0, BACKUP = 1, RESTORE = 2, CONFIGURE = 3, STATUS = 4, RESTORING = 5 };
          private DISPLAY display = DISPLAY.HIDDEN;
 
 
@@ -66,7 +66,10 @@ namespace Nereid
                   backupCloseTime = DateTime.Now.AddSeconds(BACKUP_DISPLAY_REMAINS_OPEN_TIME);
                }
                // Restore
-               DrawDisplayToggle("Restore", DISPLAY.RESTORE);
+               if(DrawDisplayToggle("Restore", DISPLAY.RESTORE) && !SAVE.manager.RestoreCompleted())
+               {
+                  display = DISPLAY.RESTORING;
+               }
                // Configure
                DrawDisplayToggle("Configure", DISPLAY.CONFIGURE);
                // Status
@@ -79,6 +82,9 @@ namespace Nereid
                {
                   case DISPLAY.BACKUP:
                      DisplayBackup();
+                     break;
+                  case DISPLAY.RESTORING:
+                     DisplayRestoring();
                      break;
                   case DISPLAY.RESTORE:
                      DisplayRestore();
@@ -128,6 +134,30 @@ namespace Nereid
             GUILayout.EndHorizontal();
          }
 
+         private void DisplayRestoring()
+         {
+            String game = SAVE.manager.GetRestoredGame();
+            DrawTitle("Restoring game " + game);
+            bool completed = SAVE.manager.RestoreCompleted();
+            GUILayout.BeginHorizontal();
+            GUI.enabled = completed;
+            if (completed)
+            {
+               GUILayout.Label("Restore complete");
+            }
+            else
+            {
+               GUILayout.Label("Restoring...");
+            }
+            GUILayout.FlexibleSpace();
+            if (GUILayout.Button("CLOSE"))
+            {
+               display = DISPLAY.HIDDEN;
+            }
+            GUI.enabled = true;
+            GUILayout.EndHorizontal();
+      }
+
          private void DisplayBackup()
          {
             GUILayout.BeginHorizontal();
@@ -155,14 +185,17 @@ namespace Nereid
             String[] games = SAVE.manager.GetBackupSetNameArray();
 
             GUILayout.BeginVertical();
+            DrawTitle("Restore game");
             gameListscrollPosition = GUILayout.BeginScrollView(gameListscrollPosition, GUI.skin.box, GUILayout.Height(105));
             selectedGameToRestore = GUILayout.SelectionGrid(selectedGameToRestore, games, 1);
+            String game = games[selectedGameToRestore];
             GUILayout.EndScrollView();
             BackupSet backupSet = SAVE.manager.GetBackupSetForName(games[selectedGameToRestore]);
             String[] backups = backupSet.GetBackupsAsArray();
             GUILayout.Label("From backup", HighLogic.Skin.label);
             backupListscrollPosition = GUILayout.BeginScrollView(backupListscrollPosition, GUI.skin.box, GUILayout.Height(210));
             selectedBackupToRestore = GUILayout.SelectionGrid(selectedBackupToRestore, backups, 1);
+            String backup = backups[selectedBackupToRestore];
             GUILayout.EndScrollView();
             GUILayout.BeginHorizontal();
             GUILayout.Label("");
@@ -171,7 +204,13 @@ namespace Nereid
             {
                display = DISPLAY.HIDDEN;
             }
-            GUILayout.Button("RESTORE");
+            if(GUILayout.Button("RESTORE"))
+            {
+               if(SAVE.manager.RestoreGame(game, backup))
+               {
+                  display = DISPLAY.RESTORING;
+               }
+            }
             GUILayout.EndHorizontal();
             GUILayout.EndVertical();
          }
@@ -184,21 +223,23 @@ namespace Nereid
             STYLE_BACKUPSET_NAME.stretchWidth = false;
             STYLE_BACKUPSET_NAME.fixedWidth = 150;
             STYLE_BACKUPSET_STATUS.stretchWidth = false;
-            STYLE_BACKUPSET_STATUS.fixedWidth = 60;
+            STYLE_BACKUPSET_STATUS.fixedWidth = 70;
             STYLE_RECOVER_BUTTON.stretchWidth = false;
             STYLE_RECOVER_BUTTON.fixedWidth = 80;
-            DrawTitle("Save Games");
+            DrawTitle("Games");
             foreach (BackupSet set in SAVE.manager)
             {
                GUILayout.BeginHorizontal();
                GUILayout.Label(set.name, STYLE_BACKUPSET_NAME);
                GUILayout.Label(set.status.ToString(), STYLE_BACKUPSET_STATUS);
+               GUI.enabled = SAVE.manager.RestoreCompleted() && SAVE.manager.BackupsCompleted();
                if(GUILayout.Button("Restore", STYLE_RECOVER_BUTTON))
                {
                   String[] sets = SAVE.manager.GetBackupSetNameArray();
                   selectedGameToRestore = IndexOf(set.name, sets);
                   display = DISPLAY.RESTORE;
                }
+               GUI.enabled = true;
                GUILayout.EndHorizontal();
             }
          }
@@ -263,7 +304,7 @@ namespace Nereid
 
          private void BackupIntervalToggle(Configuration.BACKUP_INTERVAL interval, String text)
          {
-            if (GUILayout.Toggle(SAVE.configuration.backupInterval == interval, text))
+            if (GUILayout.Toggle(SAVE.configuration.backupInterval == interval, " "+text))
             {
                SAVE.configuration.backupInterval = interval;
             }

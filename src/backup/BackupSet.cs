@@ -11,6 +11,8 @@ namespace Nereid
       public class BackupSet
       {
          private const String OK_FILE = "backup.ok";
+         private const String RESTORED_FILE = "backup.restored";
+         private const String PERSISTENT_FILE = "persistent.sfs";
 
          public enum STATUS { OK = 1, FAILED = 2, NONE = 4, RESTORING = 5, CORRUPT =5 }
 
@@ -86,12 +88,23 @@ namespace Nereid
             String backupPath = SAVE.configuration.backupPath + "/" + name;
             try
             {
-               return Directory.GetDirectories(backupPath);
+               String[] files = Directory.GetDirectories(backupPath);
+               // sort it just to be sure...
+               Array.Sort<String>(files, delegate(String left, String right)
+               {
+                  return left.CompareTo(right);
+               });
+               return files;
             }
             catch
             {
                return new String[0];
             }
+         }
+
+         private bool Successful(String folder)
+         {
+            return File.Exists(folder + "/" + OK_FILE) && File.Exists(folder + "/" + PERSISTENT_FILE);
          }
 
          public void ScanBackups()
@@ -106,7 +119,7 @@ namespace Nereid
             {
                String folder = backupFolders[i];
                String backupName = Path.GetFileName(folder);
-               if (File.Exists(folder + "/" + OK_FILE))
+               if (Successful(folder))
                {
                   if (!backupName.EndsWith("-R"))
                   {
@@ -172,6 +185,11 @@ namespace Nereid
             return backupArray;
          }
 
+         private void MarkBackupAsSucceful()
+         {
+
+         }
+
 
          public String CreateBackup(bool preRestore = false)
          {
@@ -186,10 +204,11 @@ namespace Nereid
             DateTime time = DateTime.Now;
             String timestamp = time.Hour.ToString("00") + time.Minute.ToString("00") + time.Second.ToString("00");
             String datestamp = time.Year.ToString("0000") + time.Month.ToString("00") + time.Day.ToString("00");
-            String backupFolder = backupRootFolder + "/" + datestamp + "-" + timestamp + (preRestore?"-R":"");
+            String backupFolder = backupRootFolder + "/" + datestamp + "-" + timestamp;
             if (!Directory.Exists(backupFolder))
             {
                Directory.CreateDirectory(backupFolder);
+               if (preRestore) File.Create(backupFolder + "/" + RESTORED_FILE);
             }
             else
             {
@@ -214,11 +233,20 @@ namespace Nereid
             }
             try
             {
-               File.Create(backupFolder + "/"+ OK_FILE);
-               status = STATUS.OK;
-               this.time = time;
-               CreateBackupArray();
-               Log.Info("backup successful " + backupFolder );
+               // backup cannot called succesful if the persistent file is missing
+               if (File.Exists(backupFolder + "/"+PERSISTENT_FILE))
+               {
+                  File.Create(backupFolder + "/"+ OK_FILE);
+                  status = STATUS.OK;
+                  this.time = time;
+                  CreateBackupArray();
+                  Log.Info("backup successful in " + backupFolder );
+               }
+               else
+               {
+                  status = STATUS.FAILED;
+                  Log.Error("backup failed in " + backupFolder+ "(persistent file missing)");
+               }
             }
             catch
             {
@@ -255,6 +283,7 @@ namespace Nereid
 
          private void CopyGameFilesFromBackup(String backup)
          {
+            Log.Info("copy game files from backup " + backup);
             foreach (String file in Directory.GetFiles(backup))
             {
                try
@@ -274,52 +303,42 @@ namespace Nereid
             }
          }
 
-         private bool LastBackupWasPreRestore()
-         {
-            if (prerestore.Count == 0) return false;
-            if (backups.Count == 0) return true;
-            if (backups.First().CompareTo(prerestore.First())>0) return false;
-            return true;
-         }
-
-         public void DeleteAllPreRestoreBackups()
-         {
-            Log.Info("removing all pre restore backups...");
-            foreach (String folder in Directory.GetFiles(SAVE.configuration.backupPath + "/" + name))
-            {
-               if(folder.EndsWith("-R"))
-               {
-                  Log.Info("delting folder "+folder);
-                  Directory.Delete(folder);
-               }
-            }
-
-         }
 
          public void RestoreFrom(String backup)
          {
             Log.Info("restoring game '" + this.name + "' from backup " + backup);
+            String backupRootFolder = SAVE.configuration.backupPath + "/" + name;
             try 
             {
                status = STATUS.RESTORING;
-               if(!LastBackupWasPreRestore())
+               CreateBackup(true);
+               if(status==STATUS.CORRUPT)
                {
-                  DeleteAllPreRestoreBackups();
-                  CreateBackup(true);
-                  if(status==STATUS.CORRUPT)
-                  {
-                     Log.Error("save game is corrupted; aborting restore");
-                     return;
-                  }
+                  Log.Error("save game is corrupted; aborting restore");
+                  return;
                }
                DeleteSaveGameFiles();
-               CopyGameFilesFromBackup(backup);
+               CopyGameFilesFromBackup(backupRootFolder+"/"+backup);
                status = STATUS.OK;
             }
             catch
             {
                Log.Error("save game is corrupted; restore failed");
                status = STATUS.CORRUPT;
+            }
+         }
+
+         private void DeleteFolder(String folder)
+         {
+            Log.Info("delting folder " + folder);
+            try
+            {
+               Directory.Delete(folder, true);
+            }
+            catch (Exception e)
+            {
+               Log.Error("exception caught: " + e.GetType() + ": " + e.Message);
+               Log.Error("failed to cleanup folder " + folder);
             }
          }
 
@@ -337,30 +356,41 @@ namespace Nereid
                return;
             }
 
+
             String[] backupFolders = GetBackupFolders();
             DateTime timeOfObsoleteBackups = DateTime.Now.AddDays(-daysToKeepBackups);
 
             int totalBackupCount = backupFolders.Length;
 
-            for (int i = 0; i < totalBackupCount - minNumberOfBackups; i++)
+            // make sure minNumberOfBackups successful backups are kept
+            int backupsToClean = totalBackupCount;
+            for (int i = totalBackupCount, cnt = 0; i > 0 && cnt < minNumberOfBackups; i--, backupsToClean--)
+            {
+               String folder = backupFolders[i-1];
+               if(Successful(folder))
+               {
+                  cnt++;
+               }
+            }
+
+            for (int i = 0; i < backupsToClean; i++)
             {
                String folder = backupFolders[i];
                String backupName = Path.GetFileName(folder);
+               Log.Test("check folder " + backupName);
                DateTime t = GetBackupTimeForFolder(backupName);
+               Log.Test("t = " + t);
                // backup has to be kept, because of time constraints
-               if ( t > timeOfObsoleteBackups && daysToKeepBackups>0 ) continue;
-               // all remaining backups kept because of number constraint
-               if (totalBackupCount - i < maxNumberOfBackups) break;
-               //
-               // delete this backup
-               try
+               Log.Test("time constraint = " + (t < timeOfObsoleteBackups));
+               bool backupObsoleteByTime =  ( t < timeOfObsoleteBackups ) && ( daysToKeepBackups > 0 );
+               bool backupObsoleteByNumber =  ( totalBackupCount - i > maxNumberOfBackups ) && ( maxNumberOfBackups > 0 );
+               Log.Test("backupObsoleteByTime = " + backupObsoleteByTime);
+               Log.Test("backupObsoleteByNumber = " + backupObsoleteByNumber);
+               if (backupObsoleteByTime || backupObsoleteByNumber)
                {
-                  Directory.Delete(folder);
+                  // delete this backup
+                  DeleteFolder(folder);
                   backups.Remove(backupName);
-               }
-               catch
-               {
-                  Log.Error("failed to cleanup folder "+folder);
                }
             }
             CreateBackupArray();
