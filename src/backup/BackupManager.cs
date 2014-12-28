@@ -148,24 +148,24 @@ namespace Nereid
             {
                case Configuration.BACKUP_INTERVAL.EACH_SAVE:
                   Log.Test("backup each save");
-                  job = BackupGame(set);
+                  job = BackupGameInBackground(set);
                   break;
                case Configuration.BACKUP_INTERVAL.ONCE_PER_HOUR:
                   if(elapsed.Hours>=1)
                   {
-                     job = BackupGame(set);
+                     job = BackupGameInBackground(set);
                   }
                   break;
                case Configuration.BACKUP_INTERVAL.ONCE_PER_DAY:
                   if (elapsed.Days >= 1)
                   {
-                     job = BackupGame(set);
+                     job = BackupGameInBackground(set);
                   }
                   break;
                case Configuration.BACKUP_INTERVAL.ONCE_PER_WEEK:
                   if (elapsed.Days >= 7)
                   {
-                     job = BackupGame(set);
+                     job = BackupGameInBackground(set);
                   }
                   break;
             }
@@ -189,19 +189,18 @@ namespace Nereid
             allBackupsCompleted = false;
             foreach (BackupSet set in backupSets)
             {
-               BackupGame(set);
+               BackupGameInBackground(set);
                cnt++;
             }
             return cnt;
          }
 
-         public BackupJob BackupGame(BackupSet set)
+         public BackupJob BackupGameInBackground(BackupSet set)
          {
             Log.Info("adding backup job for " + set.name+" ("+backupQueue.Size()+" backups in queue)");
             allBackupsCompleted = false;
             BackupJob job = new BackupJob(set);
-            //backupQueue.Enqueue(job);
-            job.Backup();
+            backupQueue.Enqueue(job);
             return job;
          }
 
@@ -210,7 +209,7 @@ namespace Nereid
             BackupSet set = GetBackupSetForName(name);
             if (set != null)
             {
-               return BackupGame(set);
+               return BackupGameInBackground(set);
             }
             else
             {
@@ -219,7 +218,7 @@ namespace Nereid
             }
          }
 
-         public bool RestoreGame(String name, String from)
+         public bool RestoreGameInBackground(String name, String from)
          {
             if(!restoreCompleted)
             {
@@ -233,8 +232,7 @@ namespace Nereid
                restoredGame = name;
                Log.Warning("restoring game "+name);
                RestoreJob job = new RestoreJob(set, from);
-               //restoreQueue.Enqueue(job);
-               job.Restore();
+               restoreQueue.Enqueue(job);
                return true;
             }
             else

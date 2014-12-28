@@ -206,7 +206,7 @@ namespace Nereid
             }
             if(GUILayout.Button("RESTORE"))
             {
-               if(SAVE.manager.RestoreGame(game, backup))
+               if(SAVE.manager.RestoreGameInBackground(game, backup))
                {
                   display = DISPLAY.RESTORING;
                }
