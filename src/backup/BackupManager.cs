@@ -97,12 +97,21 @@ namespace Nereid
                   backupSets.Add(set);
                   set.ScanBackups();
                }
+               SortBackupSets();
                CreateBackupSetNameArray();
             }
             catch (System.Exception e)
             {
                Log.Error("failed to scan for save games: "+e.Message);
             }
+         }
+
+         private void SortBackupSets()
+         {
+            backupSets.Sort(delegate(BackupSet left, BackupSet right)
+            {
+               return left.name.CompareTo(right.name);
+            });
          }
 
          public BackupSet GetBackupSetForName(String name)
@@ -204,15 +213,13 @@ namespace Nereid
          public BackupJob BackupGame(String name)
          {
             BackupSet set = GetBackupSetForName(name);
-            if (set != null)
+            if(set==null)
             {
-               return BackupGameInBackground(set);
+               set = new BackupSet(name, SAVE_ROOT + "/" + name);
+               backupSets.Add(set);
+               SortBackupSets();
             }
-            else
-            {
-               Log.Warning("no backup set '" + name + "' found");
-               return BackupJob.NO_JOB;
-            }
+            return BackupGameInBackground(set);
          }
 
          public bool RestoreGameInBackground(String name, String from)

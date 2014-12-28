@@ -104,7 +104,7 @@ namespace Nereid
 
          private bool Successful(String folder)
          {
-            return File.Exists(folder + "/" + OK_FILE) && File.Exists(folder + "/" + PERSISTENT_FILE);
+            return File.Exists(folder + "/" + OK_FILE) ;
          }
 
          public void ScanBackups()
@@ -233,20 +233,11 @@ namespace Nereid
             }
             try
             {
-               // backup cannot called succesful if the persistent file is missing
-               if (File.Exists(backupFolder + "/"+PERSISTENT_FILE))
-               {
-                  File.Create(backupFolder + "/"+ OK_FILE);
-                  status = STATUS.OK;
-                  this.time = time;
-                  CreateBackupArray();
-                  Log.Info("backup successful in " + backupFolder );
-               }
-               else
-               {
-                  status = STATUS.FAILED;
-                  Log.Error("backup failed in " + backupFolder+ "(persistent file missing)");
-               }
+               File.Create(backupFolder + "/"+ OK_FILE);
+               status = STATUS.OK;
+               this.time = time;
+               CreateBackupArray();
+               Log.Info("backup successful in " + backupFolder );
             }
             catch
             {
