@@ -3,8 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.IO;
-using Nereid;
 
 namespace Nereid
 {
@@ -12,11 +10,9 @@ namespace Nereid
    {
       public class Configuration
       {
-         private static readonly String ROOT_PATH = KSPUtil.ApplicationRootPath;
-         private static readonly String CONFIG_BASE_FOLDER = ROOT_PATH + "/GameData/";
          private static readonly String FILE_NAME = "S.A.V.E.dat";
 
-         private Log.LEVEL logLevel = Log.LEVEL.INFO;
+         public Log.LEVEL logLevel { get; set; }
 
 
          // backup interval
@@ -31,6 +27,7 @@ namespace Nereid
 
          public Configuration()
          {
+            logLevel = Log.LEVEL.INFO;
             backupInterval = BACKUP_INTERVAL.ONCE_PER_HOUR;
             backupPath = "./backup";
             daysToKeepBackups = 14;
@@ -41,63 +38,12 @@ namespace Nereid
 
          public void Save()
          {
-            String filename = CONFIG_BASE_FOLDER + FILE_NAME;
-            Log.Info("storing configuration in " + filename);
-            try
-            {
-               using (BinaryWriter writer = new BinaryWriter(File.Open(filename, FileMode.Create)))
-               {
-                  writer.Write((Int16)logLevel);
-                  //
-                  writer.Write(backupPath);
-                  //
-                  writer.Write((Int16)backupInterval);
-                  //
-                  writer.Write((Int16)daysToKeepBackups);
-                  //
-                  writer.Write((Int16)minNumberOfBackups);
-                  //
-                  writer.Write((Int16)maxNumberOfBackups);
-               }
-            }
-            catch
-            {
-               Log.Error("saving configuration failed");
-            }
+            FileOperations.SaveConfiguration(this, FILE_NAME);
          }
 
          public void Load()
          {
-            String filename = CONFIG_BASE_FOLDER+FILE_NAME;
-            try
-            {
-               if (File.Exists(filename))
-               {
-                  Log.Info("loading configuration from " + filename);
-                  using (BinaryReader reader = new BinaryReader(File.OpenRead(filename)))
-                  {
-                     logLevel = (Log.LEVEL) reader.ReadInt16();
-                     //
-                     backupPath = reader.ReadString();
-                     //
-                     backupInterval = (BACKUP_INTERVAL)reader.ReadUInt16();
-                     //
-                     daysToKeepBackups = reader.ReadUInt16();
-                     //
-                     minNumberOfBackups = reader.ReadUInt16();
-                     //
-                     maxNumberOfBackups = reader.ReadUInt16();
-                  }
-               }
-               else
-               {
-                  Log.Info("no config file: default configuration");
-               }
-            }
-            catch
-            {
-               Log.Warning("loading configuration failed or incompatible file");
-            }
+            FileOperations.LoadConfiguration(this, FILE_NAME);
          }
       }
    }

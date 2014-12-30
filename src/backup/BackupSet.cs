@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.IO;
 
 namespace Nereid
 {
@@ -88,7 +87,7 @@ namespace Nereid
             String backupPath = SAVE.configuration.backupPath + "/" + name;
             try
             {
-               String[] files = Directory.GetDirectories(backupPath);
+               String[] files = FileOperations.GetDirectories(backupPath);
                // sort it just to be sure...
                Array.Sort<String>(files, delegate(String left, String right)
                {
@@ -113,7 +112,7 @@ namespace Nereid
 
          private bool Successful(String folder)
          {
-            return File.Exists(folder + "/" + OK_FILE) ;
+            return FileOperations.FileExists(folder + "/" + OK_FILE);
          }
 
          public void ScanBackups()
@@ -127,7 +126,7 @@ namespace Nereid
             for (int i = 0; i < backupFolders.Length; i++)
             {
                String folder = backupFolders[i];
-               String backupName = Path.GetFileName(folder);
+               String backupName = FileOperations.GetFileName(folder);
                if (Successful(folder))
                {
                   if (!backupName.EndsWith("-R"))
@@ -204,21 +203,21 @@ namespace Nereid
          {
             String backupRootFolder = SAVE.configuration.backupPath+"/"+name;
             Log.Info("creating backup of save game '" + name + "' in '" + backupRootFolder + "'");
-            if (!Directory.Exists(backupRootFolder))
+            if (!FileOperations.DirectoryExists(backupRootFolder))
             {
                Log.Info("creating root backup folder " + backupRootFolder);
-               Directory.CreateDirectory(backupRootFolder);
+               FileOperations.CreateDirectory(backupRootFolder);
             }
 
             DateTime time = DateTime.Now;
             String timestamp = time.Hour.ToString("00") + time.Minute.ToString("00") + time.Second.ToString("00");
             String datestamp = time.Year.ToString("0000") + time.Month.ToString("00") + time.Day.ToString("00");
             String backupFolder = backupRootFolder + "/" + datestamp + "-" + timestamp;
-            String backupName = Path.GetFileName(backupFolder);
-            if (!Directory.Exists(backupFolder))
+            String backupName = FileOperations.GetFileName(backupFolder);
+            if (!FileOperations.DirectoryExists(backupFolder))
             {
-               Directory.CreateDirectory(backupFolder);
-               if (preRestore) File.Create(backupFolder + "/" + RESTORED_FILE);
+               FileOperations.CreateDirectory(backupFolder);
+               if (preRestore) FileOperations.CreateFile(backupFolder + "/" + RESTORED_FILE);
             }
             else
             {
@@ -226,13 +225,13 @@ namespace Nereid
                return backupFolder;
             }
 
-            foreach (String sourceFile in Directory.GetFiles(pathSaveGame))
+            foreach (String sourceFile in FileOperations.GetFiles(pathSaveGame))
             {
                Log.Info("creating backup of file " + sourceFile);
-               String filename = Path.GetFileName(sourceFile);
+               String filename = FileOperations.GetFileName(sourceFile);
                try
                {
-                  File.Copy(sourceFile, backupFolder + "/" + filename);
+                  FileOperations.CopyFile(sourceFile, backupFolder + "/" + filename);
                }
                catch(Exception e)
                {
@@ -243,7 +242,7 @@ namespace Nereid
             }
             try
             {
-               File.Create(backupFolder + "/"+ OK_FILE);
+               FileOperations.CreateFile(backupFolder + "/" + OK_FILE);
                status = STATUS.OK;
                this.time = time;
                backups.Add(backupName);
@@ -270,11 +269,11 @@ namespace Nereid
          private void DeleteSaveGameFiles()
          {
             Log.Info("deleting save game files");
-            foreach (String file in Directory.GetFiles(pathSaveGame))
+            foreach (String file in FileOperations.GetFiles(pathSaveGame))
             {
                try
                {
-                  File.Delete(file);
+                  FileOperations.DeleteFile(file);
                }
                catch(Exception e)
                {
@@ -287,15 +286,15 @@ namespace Nereid
          private void CopyGameFilesFromBackup(String backup)
          {
             Log.Info("copy game files from backup " + backup);
-            foreach (String file in Directory.GetFiles(backup))
+            foreach (String file in FileOperations.GetFiles(backup))
             {
                try
                {
-                  String name = Path.GetFileName(file);
+                  String name = FileOperations.GetFileName(file);
                   if (!name.Equals(OK_FILE))
                   {
                      Log.Info("copy file "+name);
-                     File.Copy(file,pathSaveGame+"/"+name);
+                     FileOperations.CopyFile(file, pathSaveGame + "/" + name);
                   }
                }
                catch (Exception e)
@@ -336,7 +335,7 @@ namespace Nereid
             Log.Info("delting folder " + folder);
             try
             {
-               Directory.Delete(folder, true);
+               FileOperations.DeleteDirectory(folder);
             }
             catch (Exception e)
             {
@@ -379,7 +378,7 @@ namespace Nereid
             for (int i = 0; i < backupsToClean; i++)
             {
                String folder = backupFolders[i];
-               String backupName = Path.GetFileName(folder);
+               String backupName = FileOperations.GetFileName(folder);
                DateTime t = GetBackupTimeForFolder(backupName);
                // backup has to be kept, because of time constraints
                bool backupObsoleteByTime =  ( t < timeOfObsoleteBackups ) && ( daysToKeepBackups > 0 );

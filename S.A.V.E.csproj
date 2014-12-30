@@ -55,6 +55,7 @@
     <Compile Include="src\SAVE.cs" />
     <Compile Include="src\util\BlockingQueue.cs" />
     <Compile Include="src\util\Configuration.cs" />
+    <Compile Include="src\util\io\FileOperations.cs" />
     <Compile Include="src\util\Log.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
