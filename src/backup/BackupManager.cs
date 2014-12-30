@@ -245,8 +245,8 @@ namespace Nereid
                restoredGame = name;
                Log.Warning("restoring game "+name);
                RestoreJob job = new RestoreJob(set, from);
-               //restoreQueue.Enqueue(job);
-               job.Restore();
+               restoreQueue.Enqueue(job);
+               //job.Restore();
                return true;
             }
             else
