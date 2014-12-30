@@ -144,7 +144,6 @@ namespace Nereid
                return;
             }
 
-
             Configuration.BACKUP_INTERVAL interval = SAVE.configuration.backupInterval;
             BackupJob job = BackupJob.NO_JOB;
             switch (interval)
@@ -153,31 +152,43 @@ namespace Nereid
                   job = BackupGameInBackground(set);
                   break;
                case Configuration.BACKUP_INTERVAL.ONCE_IN_10_MINUTES:
-                  if (elapsed.Minutes >= 10)
+                  if (elapsed.TotalMinutes >= 10)
                   {
                      job = BackupGameInBackground(set);
                   }
                   break;
                case Configuration.BACKUP_INTERVAL.ONCE_IN_30_MINUTES:
-                  if (elapsed.Minutes >= 30)
+                  if (elapsed.TotalMinutes >= 30)
                   {
                      job = BackupGameInBackground(set);
                   }
                   break;
                case Configuration.BACKUP_INTERVAL.ONCE_PER_HOUR:
-                  if(elapsed.Hours>=1)
+                  if(elapsed.TotalHours>=1)
+                  {
+                     job = BackupGameInBackground(set);
+                  }
+                  break;
+               case Configuration.BACKUP_INTERVAL.ONCE_IN_2_HOURS:
+                  if (elapsed.TotalHours >= 2)
+                  {
+                     job = BackupGameInBackground(set);
+                  }
+                  break;
+               case Configuration.BACKUP_INTERVAL.ONCE_IN_4_HOURS:
+                  if (elapsed.TotalHours >= 4)
                   {
                      job = BackupGameInBackground(set);
                   }
                   break;
                case Configuration.BACKUP_INTERVAL.ONCE_PER_DAY:
-                  if (elapsed.Days >= 1)
+                  if (elapsed.TotalDays >= 1)
                   {
                      job = BackupGameInBackground(set);
                   }
                   break;
                case Configuration.BACKUP_INTERVAL.ONCE_PER_WEEK:
-                  if (elapsed.Days >= 7)
+                  if (elapsed.TotalDays >= 7)
                   {
                      job = BackupGameInBackground(set);
                   }
@@ -246,7 +257,6 @@ namespace Nereid
                Log.Warning("restoring game "+name);
                RestoreJob job = new RestoreJob(set, from);
                restoreQueue.Enqueue(job);
-               //job.Restore();
                return true;
             }
             else
@@ -294,7 +304,6 @@ namespace Nereid
          {
             return restoreCompleted;
          }
-
 
          public System.Collections.IEnumerator GetEnumerator()
          {

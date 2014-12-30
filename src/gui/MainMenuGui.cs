@@ -53,17 +53,25 @@ namespace Nereid
 
             DISPLAY lastDisplay = display;
 
-
             try
             {
                GUILayout.BeginVertical();
                GUILayout.BeginHorizontal();
+               if (!SAVE.manager.RestoreCompleted())
+               {
+                  GUI.enabled = false;
+               }
                if (GUILayout.Button("Backup All", GUI.skin.button))
                {
                   display = DISPLAY.BACKUP;
-                  backupCount = SAVE.manager.BackupAll();
-                  backupCloseTime = DateTime.Now.AddSeconds(BACKUP_DISPLAY_REMAINS_OPEN_TIME);
+                  // don't start another backup if there is still a backup running
+                  if (SAVE.manager.BackupsCompleted())
+                  {
+                     backupCount = SAVE.manager.BackupAll();
+                     backupCloseTime = DateTime.Now.AddSeconds(BACKUP_DISPLAY_REMAINS_OPEN_TIME);
+                  }
                }
+               GUI.enabled = true;
                // Restore
                if(DrawDisplayToggle("Restore", DISPLAY.RESTORE) && !SAVE.manager.RestoreCompleted())
                {
@@ -194,7 +202,7 @@ namespace Nereid
             GUILayout.Label("From backup", HighLogic.Skin.label);
             backupListscrollPosition = GUILayout.BeginScrollView(backupListscrollPosition, GUI.skin.box, GUILayout.Height(210));
             selectedBackupToRestore = GUILayout.SelectionGrid(selectedBackupToRestore, backups, 1);
-            String backup = backups[selectedBackupToRestore];
+            String backup = backups.Length>0?backups[selectedBackupToRestore]:"";
             GUILayout.EndScrollView();
             GUILayout.BeginHorizontal();
             GUILayout.Label("");
@@ -203,6 +211,7 @@ namespace Nereid
             {
                display = DISPLAY.HIDDEN;
             }
+            GUI.enabled = backups.Length>0;
             if(GUILayout.Button("RESTORE"))
             {
                if(SAVE.manager.RestoreGameInBackground(game, backup))
@@ -210,6 +219,7 @@ namespace Nereid
                   display = DISPLAY.RESTORING;
                }
             }
+            GUI.enabled = true;
             GUILayout.EndHorizontal();
             GUILayout.EndVertical();
          }
@@ -231,7 +241,7 @@ namespace Nereid
                GUILayout.BeginHorizontal();
                GUILayout.Label(set.name, STYLE_BACKUPSET_NAME);
                GUILayout.Label(set.status.ToString(), STYLE_BACKUPSET_STATUS);
-               GUI.enabled = SAVE.manager.RestoreCompleted() && SAVE.manager.BackupsCompleted();
+               GUI.enabled = SAVE.manager.RestoreCompleted() && SAVE.manager.BackupsCompleted() && set.status != BackupSet.STATUS.NONE;
                if(GUILayout.Button("Restore", STYLE_RECOVER_BUTTON))
                {
                   String[] sets = SAVE.manager.GetBackupSetNameArray();
@@ -265,9 +275,10 @@ namespace Nereid
          private void DisplayConfigure()
          {
             Configuration config = SAVE.configuration;
-            GUIStyle STYLE_BACKUP_PATH = new GUIStyle(GUI.skin.textField);
-            STYLE_BACKUP_PATH.stretchWidth = false;
-            STYLE_BACKUP_PATH.fixedWidth = 190;
+            GUIStyle STYLE_BACKUP_PATH_LABEL = new GUIStyle(GUI.skin.label);
+            GUIStyle STYLE_BACKUP_PATH_FIELD = new GUIStyle(GUI.skin.textField);
+            STYLE_BACKUP_PATH_FIELD.stretchWidth = false;
+            STYLE_BACKUP_PATH_FIELD.fixedWidth = 190;
             GUIStyle STYLE_TEXTFIELD = new GUIStyle(GUI.skin.textField);
             STYLE_TEXTFIELD.stretchWidth = false;
             STYLE_TEXTFIELD.fixedWidth = 60;
@@ -275,14 +286,33 @@ namespace Nereid
             GUILayout.BeginVertical();
             DrawTitle("Configuration");
             GUILayout.BeginHorizontal();
-            GUILayout.Label("Backup path: ");
-            config.backupPath = GUILayout.TextField(config.backupPath, STYLE_BACKUP_PATH);
+            if (FileOperations.ValidPathForWriteOperation(config.backupPath))
+            {
+               if (FileOperations.InsideApplicationRootPath(config.backupPath))
+               {
+                  STYLE_BACKUP_PATH_FIELD.normal.textColor = GUI.skin.textField.normal.textColor;
+                  STYLE_BACKUP_PATH_LABEL.normal.textColor = GUI.skin.label.normal.textColor;
+               }
+               else
+               {
+                  STYLE_BACKUP_PATH_FIELD.normal.textColor = Color.yellow;
+                  STYLE_BACKUP_PATH_LABEL.normal.textColor = Color.yellow;
+               }
+            }
+            else
+            {
+               STYLE_BACKUP_PATH_FIELD.normal.textColor = Color.red;
+               STYLE_BACKUP_PATH_LABEL.normal.textColor = Color.red;
+            }
+            GUILayout.Label("Backup path: ", STYLE_BACKUP_PATH_LABEL);
+            config.backupPath = GUILayout.TextField(config.backupPath, STYLE_BACKUP_PATH_FIELD);
             GUILayout.EndHorizontal();
             BackupIntervalToggle(Configuration.BACKUP_INTERVAL.EACH_SAVE, "Each save");
             BackupIntervalToggle(Configuration.BACKUP_INTERVAL.ONCE_IN_10_MINUTES, "Once in 10 minutes");
             BackupIntervalToggle(Configuration.BACKUP_INTERVAL.ONCE_IN_30_MINUTES, "Once in 30 minutes");
             BackupIntervalToggle(Configuration.BACKUP_INTERVAL.ONCE_PER_HOUR, "Once per hour");
-            BackupIntervalToggle(Configuration.BACKUP_INTERVAL.ONCE_PER_HOUR, "Once per hour");
+            BackupIntervalToggle(Configuration.BACKUP_INTERVAL.ONCE_IN_2_HOURS, "Once in 2 hours");
+            BackupIntervalToggle(Configuration.BACKUP_INTERVAL.ONCE_IN_4_HOURS, "Once in 4 hours");
             BackupIntervalToggle(Configuration.BACKUP_INTERVAL.ONCE_PER_DAY, "Once per day");
             BackupIntervalToggle(Configuration.BACKUP_INTERVAL.ONCE_PER_WEEK, "Once per week");
             GUILayout.EndVertical();
@@ -301,7 +331,6 @@ namespace Nereid
             String sMaxNumberOfbackups = GUILayout.TextField(config.maxNumberOfBackups.ToString(), STYLE_TEXTFIELD);
             config.maxNumberOfBackups = int.Parse(sMaxNumberOfbackups);
             GUILayout.EndHorizontal();
-
          }
 
          private void BackupIntervalToggle(Configuration.BACKUP_INTERVAL interval, String text)

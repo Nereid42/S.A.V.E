@@ -1,5 +1,5 @@
 ﻿// just uncomment this line to allow file access anywhere on the file system
-//#define _UNLIMITED_FILE_ACCESS
+#define _UNLIMITED_FILE_ACCESS
 
 using System;
 using System.Collections.Generic;
@@ -16,76 +16,65 @@ namespace Nereid
          private static readonly String ROOT_PATH = KSPUtil.ApplicationRootPath;
          private static readonly String CONFIG_BASE_FOLDER = ROOT_PATH + "/GameData/";
 
+         public static bool InsideApplicationRootPath(String path)
+         {
+            String fullpath = Path.GetFullPath(path);
+            return fullpath.StartsWith(Path.GetFullPath(KSPUtil.ApplicationRootPath));
+         }
+
+         public static bool ValidPathForWriteOperation(String path)
+         {
+#if (_UNLIMITED_FILE_ACCESS)
+            return true;
+#else
+            String fullpath = Path.GetFullPath(path);
+            return InsideApplicationRootPath(fullpath);
+#endif
+         }
+
+         private static void CheckPathForWriteOperation(String path)
+         {
+            if (!ValidPathForWriteOperation(path))
+            {
+               Log.Error("invalid write path: "+path);
+               throw new InvalidOperationException("write path outside KSP home folder: "+path);
+            }
+         }
+
+
          public static void DeleteFile(String file)
          {
-            String path = Path.GetFullPath(file);
+            CheckPathForWriteOperation(file);
             Log.Info("deleting file " + file);
-#if (_UNLIMITED_FILE_ACCESS)
-           File.Delete(file);
-#else
-           if (path.StartsWith(KSPUtil.ApplicationRootPath))
-           {
-              File.Delete(file);
-           }
-           else
-           {
-              throw new InvalidOperationException("can't delete files outside the KSP home folder");
-           }
-#endif
+            File.Delete(file);
          }
 
          public static void CopyFile(String from, String to)
          {
-            String path = Path.GetFullPath(to);
+            CheckPathForWriteOperation(to);
             Log.Info("copy file " + from + " to " + to);
-#if (_UNLIMITED_FILE_ACCESS)
-            File.Copy(from,to);
-#else
-            if (path.StartsWith(KSPUtil.ApplicationRootPath))
-            {
-               File.Copy(from,to);
-            }
-            else
-            {
-               throw new InvalidOperationException("can't create files outside the KSP home folder");
-            }
-#endif
+            File.Copy(from, to);
          }
 
          public static void CreateDirectory(String directory)
          {
-            String path = Path.GetFullPath(directory);
-            Log.Info("creating directory "+directory);
-#if (_UNLIMITED_FILE_ACCESS)
+            CheckPathForWriteOperation(directory);
+            Log.Info("creating directory " + directory);
             Directory.CreateDirectory(directory);
-#else
-            if (path.StartsWith(KSPUtil.ApplicationRootPath))
-            {
-               Directory.CreateDirectory(directory);
-            }
-            else
-            {
-               throw new InvalidOperationException("can't create directories outside the KSP home folder");
-            }
-#endif
          }
 
          public static void DeleteDirectory(String directory)
          {
-            String path = Path.GetFullPath(directory);
+            CheckPathForWriteOperation(directory);
             Log.Info("deleting directory " + directory);
-#if (_UNLIMITED_FILE_ACCESS)
-            Directory.Delete(directory,true);
-#else
-            if (path.StartsWith(KSPUtil.ApplicationRootPath))
-            {
-               Directory.Delete(directory,true);
-            }
-            else
-            {
-               throw new InvalidOperationException("can't delete directories outside the KSP home folder");
-            }
-#endif
+            Directory.Delete(directory, true);
+         }
+
+         public static void CreateFile(String file)
+         {
+            CheckPathForWriteOperation(file);
+            Log.Info("creating file " + file);
+            File.Create(file);
          }
 
          public static String[] GetDirectories(String path)
@@ -113,24 +102,6 @@ namespace Nereid
             return Path.GetFileName(path);
          }
 
-         public static void CreateFile(String file)
-         {
-            String path = Path.GetFullPath(file);
-            Log.Info("creating file " + file);
-
-#if (_UNLIMITED_FILE_ACCESS)
-            File.Create(file);
-#else
-            if (path.StartsWith(KSPUtil.ApplicationRootPath))
-            {
-               File.Create(file);
-            }
-            else
-            {
-               throw new InvalidOperationException("can't create files outside the KSP home folder");
-            }
-#endif
-         }
 
          public static void SaveConfiguration(Configuration configuration, String file)
          {

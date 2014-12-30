@@ -25,11 +25,24 @@ namespace Nereid
             // is there something todo?
             if(set==null) return;
             // create backup
-            set.CreateBackup();
+            CreateBackup();
             // mark this backup as done
             completed = true;
             // remove obsolete backups
             set.Cleanup();
+         }
+
+         private void  CreateBackup()
+         {
+            try
+            {
+               set.CreateBackup();
+            }
+            catch
+            {
+               set.MarkBackupAsFailed();
+               Log.Error("uncaught exception in backup");
+            }
          }
 
          public override String ToString()

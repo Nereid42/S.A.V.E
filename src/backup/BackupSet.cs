@@ -166,17 +166,12 @@ namespace Nereid
          {
             try
             {
-               int offset = prerestore.Count > 0 ? 1 : 0;
-               int cnt = backups.Count + offset;
+               int cnt = backups.Count;
                String[] newArray = new String[cnt];
-               if (prerestore.Count > 0)
-               {
-                  newArray[0] = "UNDO RESTORE";
-               }
                int i = 0;
                foreach (String name in backups)
                {
-                  newArray[i + offset] = name;
+                  newArray[i] = name;
                   i++;
                }
                backupArray = newArray;
@@ -193,9 +188,9 @@ namespace Nereid
             return backupArray;
          }
 
-         private void MarkBackupAsSucceful()
+         public void MarkBackupAsFailed()
          {
-
+            status = STATUS.FAILED;
          }
 
 
