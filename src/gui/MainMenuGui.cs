@@ -280,6 +280,9 @@ namespace Nereid
             config.backupPath = GUILayout.TextField(config.backupPath, STYLE_BACKUP_PATH);
             GUILayout.EndHorizontal();
             BackupIntervalToggle(Configuration.BACKUP_INTERVAL.EACH_SAVE, "Each save");
+            BackupIntervalToggle(Configuration.BACKUP_INTERVAL.ONCE_IN_10_MINUTES, "Once in 10 minutes");
+            BackupIntervalToggle(Configuration.BACKUP_INTERVAL.ONCE_IN_30_MINUTES, "Once in 30 minutes");
+            BackupIntervalToggle(Configuration.BACKUP_INTERVAL.ONCE_PER_HOUR, "Once per hour");
             BackupIntervalToggle(Configuration.BACKUP_INTERVAL.ONCE_PER_HOUR, "Once per hour");
             BackupIntervalToggle(Configuration.BACKUP_INTERVAL.ONCE_PER_DAY, "Once per day");
             BackupIntervalToggle(Configuration.BACKUP_INTERVAL.ONCE_PER_WEEK, "Once per week");

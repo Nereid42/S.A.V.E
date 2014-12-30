@@ -20,7 +20,7 @@ namespace Nereid
 
 
          // backup interval
-         public enum BACKUP_INTERVAL { EACH_SAVE = 0, ONCE_PER_HOUR = 1, ONCE_PER_DAY = 2, ONCE_PER_WEEK=3 }
+         public enum BACKUP_INTERVAL { EACH_SAVE = 0, ONCE_IN_10_MINUTES=1, ONCE_IN_30_MINUTES=2, ONCE_PER_HOUR = 3, ONCE_PER_DAY = 4, ONCE_PER_WEEK=5 }
 
          public String backupPath { get; set; }
          public BACKUP_INTERVAL backupInterval { get; set; }
@@ -31,9 +31,11 @@ namespace Nereid
 
          public Configuration()
          {
-            backupInterval = BACKUP_INTERVAL.ONCE_PER_DAY;
+            backupInterval = BACKUP_INTERVAL.ONCE_PER_HOUR;
             backupPath = "./backup";
             daysToKeepBackups = 14;
+            minNumberOfBackups = 20;
+            maxNumberOfBackups = 200;
          }
 
 

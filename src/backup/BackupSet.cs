@@ -21,7 +21,7 @@ namespace Nereid
          public STATUS status { get; private set; }
          public DateTime time { get; private set; }
 
-         private String[] backupArray;
+         private volatile String[] backupArray;
 
          private List<String> backups = new List<String>();
          private List<String> prerestore = new List<String>();
@@ -100,6 +100,15 @@ namespace Nereid
             {
                return new String[0];
             }
+         }
+
+         private void SortBackupsByName()
+         {
+            backups.Sort(delegate(String left, String right)
+               {
+                  // sort descending
+                  return -left.CompareTo(right);
+               });
          }
 
          private bool Successful(String folder)
@@ -205,6 +214,7 @@ namespace Nereid
             String timestamp = time.Hour.ToString("00") + time.Minute.ToString("00") + time.Second.ToString("00");
             String datestamp = time.Year.ToString("0000") + time.Month.ToString("00") + time.Day.ToString("00");
             String backupFolder = backupRootFolder + "/" + datestamp + "-" + timestamp;
+            String backupName = Path.GetFileName(backupFolder);
             if (!Directory.Exists(backupFolder))
             {
                Directory.CreateDirectory(backupFolder);
@@ -236,6 +246,8 @@ namespace Nereid
                File.Create(backupFolder + "/"+ OK_FILE);
                status = STATUS.OK;
                this.time = time;
+               backups.Add(backupName);
+               SortBackupsByName();
                CreateBackupArray();
                Log.Info("backup successful in " + backupFolder );
             }

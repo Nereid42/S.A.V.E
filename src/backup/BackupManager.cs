@@ -152,6 +152,18 @@ namespace Nereid
                case Configuration.BACKUP_INTERVAL.EACH_SAVE:
                   job = BackupGameInBackground(set);
                   break;
+               case Configuration.BACKUP_INTERVAL.ONCE_IN_10_MINUTES:
+                  if (elapsed.Minutes >= 10)
+                  {
+                     job = BackupGameInBackground(set);
+                  }
+                  break;
+               case Configuration.BACKUP_INTERVAL.ONCE_IN_30_MINUTES:
+                  if (elapsed.Minutes >= 30)
+                  {
+                     job = BackupGameInBackground(set);
+                  }
+                  break;
                case Configuration.BACKUP_INTERVAL.ONCE_PER_HOUR:
                   if(elapsed.Hours>=1)
                   {
