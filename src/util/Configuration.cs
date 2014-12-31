@@ -23,6 +23,7 @@ namespace Nereid
          public int daysToKeepBackups { get; set; }
          public int minNumberOfBackups { get; set; }
          public int maxNumberOfBackups { get; set; }
+         public bool recurseBackup { get; set; }
 
 
          public Configuration()
@@ -33,6 +34,7 @@ namespace Nereid
             daysToKeepBackups = 14;
             minNumberOfBackups = 20;
             maxNumberOfBackups = 200;
+            recurseBackup = true;
          }
 
 

@@ -161,7 +161,6 @@ namespace Nereid
             }
          }
 
-
          private void CreateBackupArray()
          {
             try
@@ -220,9 +219,13 @@ namespace Nereid
                return backupFolder;
             }
 
+            // backup files
             foreach (String sourceFile in FileOperations.GetFiles(pathSaveGame))
             {
                Log.Info("creating backup of file " + sourceFile);
+               // do not copy the restore marker
+               if (sourceFile.Equals(RESTORED_FILE)) continue;
+               
                String filename = FileOperations.GetFileName(sourceFile);
                try
                {
@@ -233,6 +236,25 @@ namespace Nereid
                   Log.Error("failed to create backup of file " + sourceFile + " in " + backupFolder+": "+e.Message);
                   status = STATUS.FAILED;
                   return backupFolder;
+               }
+            }
+            // backup subfolders if enabled
+            if(SAVE.configuration.recurseBackup)
+            {
+               foreach (String sourceFolder in FileOperations.GetDirectories(pathSaveGame))
+               {
+                  Log.Info("creating backup of foldeer " + sourceFolder);
+                  String foldername = FileOperations.GetFileName(sourceFolder);
+                  try
+                  {
+                     FileOperations.CopyDirectory(sourceFolder, backupFolder + "/" + foldername);
+                  }
+                  catch (Exception e)
+                  {
+                     Log.Error("failed to create backup of folder " + sourceFolder + " in " + backupFolder + ": " + e.Message);
+                     status = STATUS.FAILED;
+                     return backupFolder;
+                  }
                }
             }
             try
@@ -278,7 +300,7 @@ namespace Nereid
             }
          }
 
-         private void CopyGameFilesFromBackup(String backup)
+         private void RestoreFilesFromBackup(String backup, bool recurse = false)
          {
             Log.Info("copy game files from backup " + backup);
             foreach (String file in FileOperations.GetFiles(backup))
@@ -286,7 +308,7 @@ namespace Nereid
                try
                {
                   String name = FileOperations.GetFileName(file);
-                  if (!name.Equals(OK_FILE))
+                  if (!name.Equals(OK_FILE) && !name.Equals(RESTORED_FILE))
                   {
                      Log.Info("copy file "+name);
                      FileOperations.CopyFile(file, pathSaveGame + "/" + name);
@@ -297,6 +319,15 @@ namespace Nereid
                   Log.Error("failed to copy file '" + file + "'");
                   throw e;
                }
+            }
+            // copy recurse?
+            if (recurse)
+            {
+                foreach (String folder in FileOperations.GetDirectories(backup))
+                {
+                   String name = FileOperations.GetFileName(folder);
+                   FileOperations.CopyDirectory(folder, pathSaveGame + "/" + name);
+                }
             }
          }
 
@@ -315,7 +346,7 @@ namespace Nereid
                   return;
                }
                DeleteSaveGameFiles();
-               CopyGameFilesFromBackup(backupRootFolder+"/"+backup);
+               RestoreFilesFromBackup(backupRootFolder+"/"+backup, SAVE.configuration.recurseBackup);
                status = STATUS.OK;
             }
             catch

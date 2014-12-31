@@ -56,6 +56,26 @@ namespace Nereid
             File.Copy(from, to);
          }
 
+         public static void CopyDirectory(String from, String to)
+         {
+            CheckPathForWriteOperation(to);
+            Log.Info("copy directory " + from + " to " + to);
+            String[] files = GetFiles(from);
+            foreach(String file in files)
+            {
+               String name = GetFileName(file);
+               CopyFile(file, to + "/" + name);
+            }
+            String[] folders = GetDirectories(from);
+            foreach (String folder in folders)
+            {
+               String name = GetFileName(folder);
+               CreateDirectory(to + "/" + name);
+               CopyDirectory(folder, to + "/" + name);
+            }
+         }
+
+
          public static void CreateDirectory(String directory)
          {
             CheckPathForWriteOperation(directory);
@@ -122,6 +142,8 @@ namespace Nereid
                   writer.Write((Int16)configuration.minNumberOfBackups);
                   //
                   writer.Write((Int16)configuration.maxNumberOfBackups);
+                  //
+                  writer.Write(configuration.recurseBackup);
                }
             }
             catch
@@ -151,6 +173,8 @@ namespace Nereid
                      configuration.minNumberOfBackups = reader.ReadUInt16();
                      //
                      configuration.maxNumberOfBackups = reader.ReadUInt16();
+                     //
+                     configuration.recurseBackup = reader.ReadBoolean();
                   }
                }
                else

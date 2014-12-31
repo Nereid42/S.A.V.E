@@ -70,6 +70,10 @@ namespace Nereid
                      backupCount = SAVE.manager.BackupAll();
                      backupCloseTime = DateTime.Now.AddSeconds(BACKUP_DISPLAY_REMAINS_OPEN_TIME);
                   }
+                  else
+                  {
+                     Log.Warning("won't start another backup until all backups finished");
+                  }
                }
                GUI.enabled = true;
                // Restore
@@ -307,6 +311,10 @@ namespace Nereid
             GUILayout.Label("Backup path: ", STYLE_BACKUP_PATH_LABEL);
             config.backupPath = GUILayout.TextField(config.backupPath, STYLE_BACKUP_PATH_FIELD);
             GUILayout.EndHorizontal();
+            // recurse
+            config.recurseBackup = GUILayout.Toggle(config.recurseBackup, " Recurse subfolders");
+            // interval
+            GUILayout.Label("Backup interval: ");
             BackupIntervalToggle(Configuration.BACKUP_INTERVAL.EACH_SAVE, "Each save");
             BackupIntervalToggle(Configuration.BACKUP_INTERVAL.ONCE_IN_10_MINUTES, "Once in 10 minutes");
             BackupIntervalToggle(Configuration.BACKUP_INTERVAL.ONCE_IN_30_MINUTES, "Once in 30 minutes");
