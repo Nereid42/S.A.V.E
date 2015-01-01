@@ -146,8 +146,9 @@ namespace Nereid
                   writer.Write(configuration.recurseBackup);
                }
             }
-            catch
+            catch(Exception e)
             {
+               Log.Exception(e);
                Log.Error("saving configuration failed");
             }
          }
@@ -186,9 +187,7 @@ namespace Nereid
             {
                Log.Warning("loading configuration failed or incompatible file");
             }
-
          }
-
       }
    }
 }

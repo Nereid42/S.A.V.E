@@ -89,6 +89,11 @@ namespace Nereid
             }
          }
 
+         public static void Exception(Exception e)
+         {
+            Log.Error("exception caught: " + e.GetType() + ": " + e.Message);
+         }
+
       }
    }
 }

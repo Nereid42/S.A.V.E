@@ -23,7 +23,6 @@ namespace Nereid
          private volatile String[] backupArray;
 
          private List<String> backups = new List<String>();
-         private List<String> prerestore = new List<String>();
 
          public BackupSet(String name, String pathSaveGame)
          {
@@ -115,10 +114,14 @@ namespace Nereid
             return FileOperations.FileExists(folder + "/" + OK_FILE);
          }
 
+         private bool PreRestore(String folder)
+         {
+            return FileOperations.FileExists(folder + "/" + RESTORED_FILE);
+         }
+
          public void ScanBackups()
          {
             backups.Clear();
-            prerestore.Clear();
             String[] backupFolders = GetBackupFolders();
             Array.Reverse(backupFolders);
             status = STATUS.NONE;
@@ -129,14 +132,7 @@ namespace Nereid
                String backupName = FileOperations.GetFileName(folder);
                if (Successful(folder))
                {
-                  if (!backupName.EndsWith("-R"))
-                  {
-                     backups.Add(backupName);
-                  }
-                  else
-                  {
-                     prerestore.Add(backupName);
-                  }
+                  backups.Add(backupName);
 
                   DateTime t = GetBackupTimeForFolder(backupName);
 
@@ -177,7 +173,8 @@ namespace Nereid
             }
             catch(Exception e)
             {
-               Log.Error("failed to create backup array: "+e.Message);
+               Log.Exception(e);
+               Log.Error("failed to create backup array: " + e.Message);
             }
          }
 
@@ -233,7 +230,8 @@ namespace Nereid
                }
                catch(Exception e)
                {
-                  Log.Error("failed to create backup of file " + sourceFile + " in " + backupFolder+": "+e.Message);
+                  Log.Exception(e);
+                  Log.Error("failed to create backup of file " + sourceFile + " in " + backupFolder + ": " + e.Message);
                   status = STATUS.FAILED;
                   return backupFolder;
                }
@@ -251,6 +249,7 @@ namespace Nereid
                   }
                   catch (Exception e)
                   {
+                     Log.Exception(e);
                      Log.Error("failed to create backup of folder " + sourceFolder + " in " + backupFolder + ": " + e.Message);
                      status = STATUS.FAILED;
                      return backupFolder;
@@ -294,7 +293,7 @@ namespace Nereid
                }
                catch(Exception e)
                {
-                  Log.Error("failed to delete file '"+file+"'");
+                  Log.Error("failed to delete file '" + file + "'");
                   throw e;
                }
             }
@@ -316,6 +315,7 @@ namespace Nereid
                }
                catch (Exception e)
                {
+                  Log.Exception(e);
                   Log.Error("failed to copy file '" + file + "'");
                   throw e;
                }
@@ -330,7 +330,6 @@ namespace Nereid
                 }
             }
          }
-
 
          public void RestoreFrom(String backup)
          {
@@ -349,8 +348,9 @@ namespace Nereid
                RestoreFilesFromBackup(backupRootFolder+"/"+backup, SAVE.configuration.recurseBackup);
                status = STATUS.OK;
             }
-            catch
+            catch (Exception e)
             {
+               Log.Exception(e);
                Log.Error("save game is corrupted; restore failed");
                status = STATUS.CORRUPT;
             }
@@ -365,7 +365,7 @@ namespace Nereid
             }
             catch (Exception e)
             {
-               Log.Error("exception caught: " + e.GetType() + ": " + e.Message);
+               Log.Exception(e);
                Log.Error("failed to cleanup folder " + folder);
             }
          }
@@ -374,6 +374,7 @@ namespace Nereid
          {
             Log.Info("cleaning up backup "+name);
 
+            // constraint for cleanup
             int minNumberOfBackups = SAVE.configuration.minNumberOfBackups;
             int maxNumberOfBackups = SAVE.configuration.maxNumberOfBackups;
             int daysToKeepBackups = SAVE.configuration.daysToKeepBackups;
@@ -384,10 +385,11 @@ namespace Nereid
                return;
             }
 
-
             String[] backupFolders = GetBackupFolders();
+            // the point in time until backups have to be kept
             DateTime timeOfObsoleteBackups = DateTime.Now.AddDays(-daysToKeepBackups);
 
+            // total number of backups before cleanup
             int totalBackupCount = backupFolders.Length;
 
             // make sure minNumberOfBackups successful backups are kept
@@ -401,25 +403,28 @@ namespace Nereid
                }
             }
 
+            // backupsToClean is now set, so that minNumberOfBackups are kept
             for (int i = 0; i < backupsToClean; i++)
             {
                String folder = backupFolders[i];
                String backupName = FileOperations.GetFileName(folder);
                DateTime t = GetBackupTimeForFolder(backupName);
-               // backup has to be kept, because of time constraints
-               bool backupObsoleteByTime =  ( t < timeOfObsoleteBackups ) && ( daysToKeepBackups > 0 );
-               bool backupObsoleteByNumber =  ( totalBackupCount - i > maxNumberOfBackups ) && ( maxNumberOfBackups > 0 );
+               // backup has to be kept, because of time constraints, if not then backup may be obsolete
+               bool backupObsoleteByTime = (t < timeOfObsoleteBackups) && (daysToKeepBackups > 0);
+               // backup has to be kept, because of number constraints, if not then backup may be obsolete
+               bool backupObsoleteByNumber = (totalBackupCount - i > maxNumberOfBackups) && (maxNumberOfBackups > 0);
+               // backups are obsolete, if they are obsolete by number constratins AND time constraints
                if (backupObsoleteByTime || backupObsoleteByNumber)
                {
-                  // delete this backup
+                  // delete backup, if obsolete
                   DeleteFolder(folder);
+                  // remove from backup list
                   backups.Remove(backupName);
                }
             }
+            // refresh backup array (for GUI display)
             CreateBackupArray();
          }
       }
-
-
    }
 }
