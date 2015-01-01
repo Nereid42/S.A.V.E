@@ -1,4 +1,4 @@
-﻿// just uncomment this line to restrict file access anywhere on the file system
+﻿// just uncomment this line to restrict file access to KSP installation folder
 #define _UNLIMITED_FILE_ACCESS
 
 using System;
