@@ -13,6 +13,9 @@ namespace Nereid
          private const int MILLIS_RESTORE_WAIT = 2000;
          private static String SAVE_ROOT = KSPUtil.ApplicationRootPath+"saves";
 
+         private const String SAVE_GAME_TRAINING = "training";
+         private const String SAVE_GAME_SCENARIOS = "scenarios";
+
          private List<BackupSet> backupSets = new List<BackupSet>();
 
          // array of names for display in GUI
@@ -81,6 +84,11 @@ namespace Nereid
             Log.Info("restore thread terminated");
          }
 
+         private bool BuildInSaveGame(String name)
+         {
+            return name.Equals(SAVE_GAME_TRAINING) || name.Equals(SAVE_GAME_SCENARIOS);
+         }
+
          public void ScanSavegames()
          {
             Log.Info("scanning save games");
@@ -92,10 +100,17 @@ namespace Nereid
 
                   String name = Path.GetFileName(folder);
 
-                  BackupSet set = new BackupSet(name, folder);
+                  if (!BuildInSaveGame(name))
+                  {
+                     BackupSet set = new BackupSet(name, folder);
 
-                  backupSets.Add(set);
-                  set.ScanBackups();
+                     backupSets.Add(set);
+                     set.ScanBackups();
+                  }
+                  else
+                  {
+                     Log.Detail("save game "+name+" is build in and ignored");
+                  }
                }
                SortBackupSets();
                CreateBackupSetNameArray();
