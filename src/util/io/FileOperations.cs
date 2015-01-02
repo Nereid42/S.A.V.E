@@ -19,7 +19,7 @@ namespace Nereid
          public static bool InsideApplicationRootPath(String path)
          {
             String fullpath = Path.GetFullPath(path);
-            return fullpath.StartsWith(Path.GetFullPath(KSPUtil.ApplicationRootPath));
+            return fullpath.StartsWith(Path.GetFullPath(ROOT_PATH));
          }
 
          public static bool ValidPathForWriteOperation(String path)
@@ -61,7 +61,7 @@ namespace Nereid
             CheckPathForWriteOperation(to);
             Log.Info("copy directory " + from + " to " + to);
             String[] files = GetFiles(from);
-            foreach(String file in files)
+            foreach (String file in files)
             {
                String name = GetFileName(file);
                CopyFile(file, to + "/" + name);

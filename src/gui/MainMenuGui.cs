@@ -106,6 +106,17 @@ namespace Nereid
                   case DISPLAY.STATUS:
                      DisplayStatus();
                      break;
+                  case DISPLAY.HIDDEN:
+                     // are we ingame? then make the window disappear (this shouldn't be neccessary, but just to be sure...)
+                     if(HighLogic.LoadedScene == GameScenes.MAINMENU)
+                     {
+                        SetVisible(true);
+                     }
+                     else
+                     {
+                        SetVisible(false);
+                     }
+                     break;
                }
                GUILayout.EndVertical();
 
