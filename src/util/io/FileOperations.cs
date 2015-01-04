@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
+using System.Threading;
 
 
 namespace Nereid
@@ -64,17 +64,16 @@ namespace Nereid
             foreach (String file in files)
             {
                String name = GetFileName(file);
-               CopyFile(file, to + "/" + name);
+               CopyFileDelayedRetry(file, to + "/" + name);
             }
             String[] folders = GetDirectories(from);
             foreach (String folder in folders)
             {
                String name = GetFileName(folder);
-               CreateDirectory(to + "/" + name);
+               CreateDirectoryDelayedRetry(to + "/" + name);
                CopyDirectory(folder, to + "/" + name);
             }
          }
-
 
          public static void CreateDirectory(String directory)
          {
@@ -95,6 +94,50 @@ namespace Nereid
             CheckPathForWriteOperation(file);
             Log.Info("creating file " + file);
             File.Create(file);
+         }
+
+         public static void CreateDirectoryDelayedRetry(String directory, int retries=3, int delayinMillis = 500)
+         {
+            {
+               try
+               {
+                  CreateDirectory(directory);
+                  return;
+               }
+               catch(Exception e)
+               {
+                  Log.Exception(e);
+                  if (retries > 0)
+                  {
+                     retries--;
+                     Log.Info("retrying operation: create directory in " + delayinMillis+" ms");
+                     Thread.Sleep(delayinMillis);
+                  }
+               }
+            }
+            while (retries > 0) ;
+         }
+
+         public static void CopyFileDelayedRetry(String from, String to, int retries = 6, int delayinMillis = 200)
+         {
+            {
+               try
+               {
+                  CopyFile(from, to);
+                  return;
+               }
+               catch (Exception e)
+               {
+                  Log.Exception(e);
+                  if (retries > 0)
+                  {
+                     retries--;
+                     Log.Info("retrying operation: copy file in " + delayinMillis + " ms");
+                     Thread.Sleep(delayinMillis);
+                  }
+               }
+            }
+            while (retries > 0) ;
          }
 
          public static String[] GetDirectories(String path)
@@ -144,6 +187,8 @@ namespace Nereid
                   writer.Write((Int16)configuration.maxNumberOfBackups);
                   //
                   writer.Write(configuration.recurseBackup);
+                  //
+                  writer.Write((Int16)configuration.customBackupInterval);
                }
             }
             catch(Exception e)
@@ -176,6 +221,8 @@ namespace Nereid
                      configuration.maxNumberOfBackups = reader.ReadUInt16();
                      //
                      configuration.recurseBackup = reader.ReadBoolean();
+                     //
+                     configuration.customBackupInterval = reader.ReadUInt16();
                   }
                }
                else

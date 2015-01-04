@@ -208,6 +208,16 @@ namespace Nereid
                      job = BackupGameInBackground(set);
                   }
                   break;
+               case Configuration.BACKUP_INTERVAL.CUSTOM:
+                  if (elapsed.Minutes >= SAVE.configuration.customBackupInterval)
+                  {
+                     job = BackupGameInBackground(set);
+                  }
+                  break;
+               default:
+                  Log.Error("invalid backup interval ignored; backup is done each save");
+                  job = BackupGameInBackground(set);
+                  break;
             }
             // wait for job to complete, to avoid concurrency problems 
             WaitUntilBackupJobCompleted(job);

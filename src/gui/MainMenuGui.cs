@@ -219,6 +219,7 @@ namespace Nereid
             selectedBackupToRestore = GUILayout.SelectionGrid(selectedBackupToRestore, backups, 1);
             String backup = backups.Length>0?backups[selectedBackupToRestore]:"";
             GUILayout.EndScrollView();
+            SAVE.configuration.backupBeforeRestore = GUILayout.Toggle(SAVE.configuration.backupBeforeRestore, "Create a backup before restore");
             GUILayout.BeginHorizontal();
             GUILayout.Label("");
             GUILayout.FlexibleSpace();
@@ -334,22 +335,41 @@ namespace Nereid
             BackupIntervalToggle(Configuration.BACKUP_INTERVAL.ONCE_IN_4_HOURS, "Once in 4 hours");
             BackupIntervalToggle(Configuration.BACKUP_INTERVAL.ONCE_PER_DAY, "Once per day");
             BackupIntervalToggle(Configuration.BACKUP_INTERVAL.ONCE_PER_WEEK, "Once per week");
+            GUILayout.BeginHorizontal();
+            BackupIntervalToggle(Configuration.BACKUP_INTERVAL.CUSTOM, "Custom (minutes)");
+            GUILayout.FlexibleSpace();
+            String sCustomInterval = GUILayout.TextField(config.customBackupInterval.ToString(), STYLE_TEXTFIELD);
+            config.customBackupInterval = ParseInt(sCustomInterval);
+            GUILayout.EndHorizontal();
             GUILayout.EndVertical();
             GUILayout.BeginHorizontal();
-            GUILayout.Label("Days to keep Backups: ");
+            GUILayout.Label("Days to keep backups: ");
             String sDaysToKeepBackups = GUILayout.TextField(config.daysToKeepBackups.ToString(), STYLE_TEXTFIELD);
-            config.daysToKeepBackups = int.Parse(sDaysToKeepBackups);
+            config.daysToKeepBackups = ParseInt(sDaysToKeepBackups);
             GUILayout.EndHorizontal();
             GUILayout.BeginHorizontal();
             GUILayout.Label("Min number of backups: ");
             String sMinNumberOfbackups = GUILayout.TextField(config.minNumberOfBackups.ToString(), STYLE_TEXTFIELD);
-            config.minNumberOfBackups = int.Parse(sMinNumberOfbackups);
+            config.minNumberOfBackups = ParseInt(sMinNumberOfbackups);
             GUILayout.EndHorizontal();
             GUILayout.BeginHorizontal();
             GUILayout.Label("Max number of backups: ");
             String sMaxNumberOfbackups = GUILayout.TextField(config.maxNumberOfBackups.ToString(), STYLE_TEXTFIELD);
-            config.maxNumberOfBackups = int.Parse(sMaxNumberOfbackups);
+            config.maxNumberOfBackups = ParseInt(sMaxNumberOfbackups);
             GUILayout.EndHorizontal();
+         }
+
+         private int ParseInt(String s)
+         {
+            try
+            {
+               return int.Parse(s);
+            }
+            catch(NotFiniteNumberException)
+            {
+               Log.Warning("invalid number format: " + s);
+               return 0;
+            }
          }
 
          private void BackupIntervalToggle(Configuration.BACKUP_INTERVAL interval, String text)

@@ -338,7 +338,10 @@ namespace Nereid
             try 
             {
                status = STATUS.RESTORING;
-               CreateBackup(true);
+               if(SAVE.configuration.backupBeforeRestore)
+               {
+                  CreateBackup(true);
+               }
                if(status==STATUS.CORRUPT)
                {
                   Log.Error("save game is corrupted; aborting restore");
