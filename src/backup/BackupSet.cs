@@ -302,6 +302,9 @@ namespace Nereid
          private void RestoreFilesFromBackup(String backup, bool recurse = false)
          {
             Log.Info("copy game files from backup " + backup);
+            //
+            DeleteSaveGameFiles();
+            //
             foreach (String file in FileOperations.GetFiles(backup))
             {
                try
@@ -323,10 +326,12 @@ namespace Nereid
             // copy recurse?
             if (recurse)
             {
-                foreach (String folder in FileOperations.GetDirectories(backup))
+               foreach (String folder in FileOperations.GetDirectories(backup))
                 {
                    String name = FileOperations.GetFileName(folder);
-                   FileOperations.CopyDirectory(folder, pathSaveGame + "/" + name);
+                   String target =  pathSaveGame + "/" + name;
+                   FileOperations.DeleteDirectory(target);
+                   FileOperations.CopyDirectory(folder, target);
                 }
             }
          }
@@ -347,8 +352,7 @@ namespace Nereid
                   Log.Error("save game is corrupted; aborting restore");
                   return;
                }
-               DeleteSaveGameFiles();
-               RestoreFilesFromBackup(backupRootFolder+"/"+backup, SAVE.configuration.recurseBackup);
+               RestoreFilesFromBackup(backupRootFolder + "/" + backup, SAVE.configuration.recurseBackup);
                status = STATUS.OK;
             }
             catch (Exception e)
@@ -361,7 +365,7 @@ namespace Nereid
 
          private void DeleteFolder(String folder)
          {
-            Log.Info("delting folder " + folder);
+            Log.Info("deleting folder " + folder);
             try
             {
                FileOperations.DeleteDirectory(folder);

@@ -1,5 +1,7 @@
 ﻿// just uncomment this line to restrict file access to KSP installation folder
 #define _UNLIMITED_FILE_ACCESS
+// for debugging
+// #define _DEBUG
 
 using System;
 using System.Collections.Generic;
@@ -18,8 +20,16 @@ namespace Nereid
 
          public static bool InsideApplicationRootPath(String path)
          {
-            String fullpath = Path.GetFullPath(path);
-            return fullpath.StartsWith(Path.GetFullPath(ROOT_PATH));
+            if (path == null) return false;
+            try
+            {
+               String fullpath = Path.GetFullPath(path);
+               return fullpath.StartsWith(Path.GetFullPath(ROOT_PATH));
+            }
+            catch
+            {
+               return false;
+            }
          }
 
          public static bool ValidPathForWriteOperation(String path)
@@ -98,6 +108,7 @@ namespace Nereid
 
          public static void CreateDirectoryDelayedRetry(String directory, int retries=3, int delayinMillis = 500)
          {
+            do
             {
                try
                {
@@ -113,13 +124,17 @@ namespace Nereid
                      Log.Info("retrying operation: create directory in " + delayinMillis+" ms");
                      Thread.Sleep(delayinMillis);
                   }
+                  else
+                  {
+                     throw e;
+                  }
                }
-            }
-            while (retries > 0) ;
+            }  while (retries > 0);
          }
 
          public static void CopyFileDelayedRetry(String from, String to, int retries = 6, int delayinMillis = 200)
          {
+            do
             {
                try
                {
@@ -135,9 +150,12 @@ namespace Nereid
                      Log.Info("retrying operation: copy file in " + delayinMillis + " ms");
                      Thread.Sleep(delayinMillis);
                   }
+                  else
+                  {
+                     throw e;
+                  }
                }
-            }
-            while (retries > 0) ;
+            } while (retries > 0);
          }
 
          public static String[] GetDirectories(String path)
@@ -165,6 +183,30 @@ namespace Nereid
             return Path.GetFileName(path);
          }
 
+         public static String ExpandBackupPath(String path)
+         {
+            if (path == null) return KSPUtil.ApplicationRootPath;
+            path = path.Trim();
+            if (path.StartsWith("./") || path.StartsWith(".\\"))
+            {
+               path = KSPUtil.ApplicationRootPath + path.Substring(2);
+            }
+            return path;
+         }
+
+#if (_DEBUG)
+         /**
+          * Used for debugging purposes only
+          */
+         public static void AppendText(String filename, String text)
+         {
+            using (StreamWriter sw = File.AppendText(filename))
+            {
+               sw.WriteLine(text);
+               sw.Flush();
+            }
+         }
+#endif
 
          public static void SaveConfiguration(Configuration configuration, String file)
          {
@@ -195,6 +237,10 @@ namespace Nereid
             {
                Log.Exception(e);
                Log.Error("saving configuration failed");
+            }
+            finally
+            {
+               configuration.backupPath = ExpandBackupPath(configuration.backupPath);
             }
          }
 

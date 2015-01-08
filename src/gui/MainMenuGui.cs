@@ -321,7 +321,7 @@ namespace Nereid
                STYLE_BACKUP_PATH_LABEL.normal.textColor = Color.red;
             }
             GUILayout.Label("Backup path: ", STYLE_BACKUP_PATH_LABEL);
-            config.backupPath = GUILayout.TextField(config.backupPath, STYLE_BACKUP_PATH_FIELD);
+            config.backupPath =  FileOperations.ExpandBackupPath(GUILayout.TextField(config.backupPath, STYLE_BACKUP_PATH_FIELD));
             GUILayout.EndHorizontal();
             // recurse
             config.recurseBackup = GUILayout.Toggle(config.recurseBackup, " Recurse subfolders");

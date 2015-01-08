@@ -36,6 +36,7 @@ namespace Nereid
          private volatile bool restoreCompleted = true;
          private volatile String restoredGame;
 
+
          public BackupManager()
          {
             Log.Info("new instance of backup manager (save root is "+SAVE_ROOT+")");
@@ -329,6 +330,7 @@ namespace Nereid
          {
             return restoreCompleted;
          }
+
 
          public System.Collections.IEnumerator GetEnumerator()
          {
