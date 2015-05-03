@@ -230,7 +230,7 @@ namespace Nereid
             GUI.enabled = backups.Length>0;
             if(GUILayout.Button("RESTORE"))
             {
-               if(SAVE.manager.RestoreGameInBackground(game, backup))
+               if(SAVE.manager.RestoreGame(game, backup))
                {
                   display = DISPLAY.RESTORING;
                }
@@ -302,6 +302,15 @@ namespace Nereid
             GUILayout.BeginVertical();
             DrawTitle("Configuration");
             GUILayout.BeginHorizontal();
+            GUILayout.Label("Log:");
+            LogLevelButton(Log.LEVEL.OFF, "OFF");
+            LogLevelButton(Log.LEVEL.ERROR, "ERROR");
+            LogLevelButton(Log.LEVEL.WARNING, "WARNING");
+            LogLevelButton(Log.LEVEL.INFO, "INFO");
+            LogLevelButton(Log.LEVEL.DETAIL, "DETAIL");
+            LogLevelButton(Log.LEVEL.TRACE, "TRACE");
+            GUILayout.EndHorizontal();
+            GUILayout.BeginHorizontal();
             if (FileOperations.ValidPathForWriteOperation(config.backupPath))
             {
                if (FileOperations.InsideApplicationRootPath(config.backupPath))
@@ -321,8 +330,10 @@ namespace Nereid
                STYLE_BACKUP_PATH_LABEL.normal.textColor = Color.red;
             }
             GUILayout.Label("Backup path: ", STYLE_BACKUP_PATH_LABEL);
-            config.backupPath =  FileOperations.ExpandBackupPath(GUILayout.TextField(config.backupPath, STYLE_BACKUP_PATH_FIELD));
+            config.backupPath = FileOperations.ExpandBackupPath(GUILayout.TextField(config.backupPath, STYLE_BACKUP_PATH_FIELD));
             GUILayout.EndHorizontal();
+            // async
+            config.asynchronous = GUILayout.Toggle(config.asynchronous, " Asynchronous backup/restore");
             // recurse
             config.recurseBackup = GUILayout.Toggle(config.recurseBackup, " Recurse subfolders");
             // interval
@@ -377,6 +388,15 @@ namespace Nereid
             if (GUILayout.Toggle(SAVE.configuration.backupInterval == interval, " "+text))
             {
                SAVE.configuration.backupInterval = interval;
+            }
+         }
+
+         private void LogLevelButton(Log.LEVEL level, String text)
+         {
+            if (GUILayout.Toggle(Log.GetLevel() == level, text,GUI.skin.button) && Log.GetLevel() != level)
+            {
+               SAVE.configuration.logLevel = level;
+               Log.SetLevel(level);
             }
          }
 

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.IO;
 using System.Threading;
+using UnityEngine;
 
 namespace Nereid
 {
@@ -90,27 +91,42 @@ namespace Nereid
             return name.Equals(SAVE_GAME_TRAINING) || name.Equals(SAVE_GAME_SCENARIOS);
          }
 
+         private void AddBackup(String name, String folder)
+         {
+            if (!BuildInSaveGame(name))
+            {
+               BackupSet set = new BackupSet(name, folder);
+               backupSets.Add(set);
+               set.ScanBackups();
+            }
+            else
+            {
+               Log.Detail("save game " + name + " is build in and ignored");
+            }
+         }
+
          public void ScanSavegames()
          {
             Log.Info("scanning save games");
             try
             {
+               // scan save games
                foreach (String folder in Directory.GetDirectories(SAVE_ROOT))
                {
                   Log.Info("save game found: "+folder);
-
                   String name = Path.GetFileName(folder);
-
-                  if (!BuildInSaveGame(name))
+                  Log.Detail("adding backup set " + name);
+                  AddBackup(name, folder);
+               }
+               // scan backups (if save game folder was deleted)
+               foreach (String folder in Directory.GetDirectories(SAVE.configuration.backupPath))
+               {
+                  String name = Path.GetFileName(folder);
+                  BackupSet set = GetBackupSetForName(name);
+                  if(set==null)
                   {
-                     BackupSet set = new BackupSet(name, folder);
-
-                     backupSets.Add(set);
-                     set.ScanBackups();
-                  }
-                  else
-                  {
-                     Log.Detail("save game "+name+" is build in and ignored");
+                     Log.Detail("adding backup set "+name+" (save game was deleted)");
+                     AddBackup(name, SAVE_ROOT+"/"+name);
                   }
                }
                SortBackupSets();
@@ -165,59 +181,59 @@ namespace Nereid
             switch (interval)
             {
                case Configuration.BACKUP_INTERVAL.EACH_SAVE:
-                  job = BackupGameInBackground(set);
+                  job = BackupGame(set);
                   break;
                case Configuration.BACKUP_INTERVAL.ONCE_IN_10_MINUTES:
                   if (elapsed.TotalMinutes >= 10)
                   {
-                     job = BackupGameInBackground(set);
+                     job = BackupGame(set);
                   }
                   break;
                case Configuration.BACKUP_INTERVAL.ONCE_IN_30_MINUTES:
                   if (elapsed.TotalMinutes >= 30)
                   {
-                     job = BackupGameInBackground(set);
+                     job = BackupGame(set);
                   }
                   break;
                case Configuration.BACKUP_INTERVAL.ONCE_PER_HOUR:
                   if(elapsed.TotalHours>=1)
                   {
-                     job = BackupGameInBackground(set);
+                     job = BackupGame(set);
                   }
                   break;
                case Configuration.BACKUP_INTERVAL.ONCE_IN_2_HOURS:
                   if (elapsed.TotalHours >= 2)
                   {
-                     job = BackupGameInBackground(set);
+                     job = BackupGame(set);
                   }
                   break;
                case Configuration.BACKUP_INTERVAL.ONCE_IN_4_HOURS:
                   if (elapsed.TotalHours >= 4)
                   {
-                     job = BackupGameInBackground(set);
+                     job = BackupGame(set);
                   }
                   break;
                case Configuration.BACKUP_INTERVAL.ONCE_PER_DAY:
                   if (elapsed.TotalDays >= 1)
                   {
-                     job = BackupGameInBackground(set);
+                     job = BackupGame(set);
                   }
                   break;
                case Configuration.BACKUP_INTERVAL.ONCE_PER_WEEK:
                   if (elapsed.TotalDays >= 7)
                   {
-                     job = BackupGameInBackground(set);
+                     job = BackupGame(set);
                   }
                   break;
                case Configuration.BACKUP_INTERVAL.CUSTOM:
                   if (elapsed.Minutes >= SAVE.configuration.customBackupInterval)
                   {
-                     job = BackupGameInBackground(set);
+                     job = BackupGame(set);
                   }
                   break;
                default:
                   Log.Error("invalid backup interval ignored; backup is done each save");
-                  job = BackupGameInBackground(set);
+                  job = BackupGame(set);
                   break;
             }
             // wait for job to complete, to avoid concurrency problems 
@@ -240,57 +256,83 @@ namespace Nereid
             allBackupsCompleted = false;
             foreach (BackupSet set in backupSets)
             {
-               BackupGameInBackground(set);
+               BackupGame(set);
                cnt++;
             }
             return cnt;
          }
 
-         public BackupJob BackupGameInBackground(BackupSet set)
+         public BackupJob BackupGame(BackupSet set)
          {
             Log.Info("adding backup job for " + set.name+" ("+backupQueue.Size()+" backups in queue)");
             allBackupsCompleted = false;
             BackupJob job = new BackupJob(set);
-            backupQueue.Enqueue(job);
+            if (SAVE.configuration.asynchronous)
+            {
+               Log.Info("adding backup job for " + set.name + " (" + backupQueue.Size() + " backups in queue)");
+               backupQueue.Enqueue(job);
+            }
+            else
+            {
+               Log.Info("synchronous backup to backup set '" + set.name);
+               // wait for asynchronous backups to complete
+               while (backupQueue.Size() > 0) Thread.Sleep(100);
+               // do backup
+               job.Backup();
+               // done
+               allBackupsCompleted = true;
+            }
             return job;
          }
 
-         public BackupJob BackupGame(String name)
+         public BackupJob BackupGame(String game)
          {
-            BackupSet set = GetBackupSetForName(name);
+            BackupSet set = GetBackupSetForName(game);
             if(set==null)
             {
-               set = new BackupSet(name, SAVE_ROOT + "/" + name);
+               set = new BackupSet(game, SAVE_ROOT + "/" + game);
                backupSets.Add(set);
                SortBackupSets();
                CreateBackupSetNameArray();
             }
-            return BackupGameInBackground(set);
+            return BackupGame(set);
          }
 
-         public bool RestoreGameInBackground(String name, String from)
+         public bool RestoreGame(String game, String from)
          {
-            if(!restoreCompleted)
-            {
-               Log.Warning("restore not complete!");
-               return false;
-            }
-            BackupSet set = GetBackupSetForName(name);
+            BackupSet set = GetBackupSetForName(game);
             if (set != null)
             {
                restoreCompleted = false;
-               restoredGame = name;
-               Log.Warning("restoring game "+name);
+               restoredGame = game;
                RestoreJob job = new RestoreJob(set, from);
-               restoreQueue.Enqueue(job);
+               Log.Warning("restoring game " + game);
+               if (SAVE.configuration.asynchronous)
+               {
+                  Log.Info("asynchronous restore from backup set '" + game + "' backup '" + from + "'");
+                  restoreQueue.Enqueue(job);
+               }
+               else
+               {
+                  Log.Info("synchronous restore from backup set '" + game + "' backup '" + from + "'");
+                  // wait for asynchronous restores to complete
+                  while (restoreQueue.Size() > 0) Thread.Sleep(100);
+                  // do restore
+                  job.Restore();
+                  // done
+                  restoreCompleted = true;
+               }
                return true;
             }
             else
             {
-               Log.Warning("no backup set '" + name + "' found");
+               Log.Warning("no backup set '" + game + "' found");
                return false;
             }
+
          }
+
+
 
          public String GetRestoredGame()
          {

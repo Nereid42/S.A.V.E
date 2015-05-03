@@ -70,17 +70,24 @@ namespace Nereid
          {
             CheckPathForWriteOperation(to);
             Log.Info("copy directory " + from + " to " + to);
+
+            // create target directory if not existient
+            if (!DirectoryExists(to))
+            {
+               CreateDirectoryRetry(to);
+            }
+
             String[] files = GetFiles(from);
             foreach (String file in files)
             {
                String name = GetFileName(file);
-               CopyFileDelayedRetry(file, to + "/" + name);
+               CopyFileRetry(file, to + "/" + name);
             }
             String[] folders = GetDirectories(from);
             foreach (String folder in folders)
             {
                String name = GetFileName(folder);
-               CreateDirectoryDelayedRetry(to + "/" + name);
+               CreateDirectoryRetry(to + "/" + name);
                CopyDirectory(folder, to + "/" + name);
             }
          }
@@ -106,7 +113,7 @@ namespace Nereid
             File.Create(file);
          }
 
-         public static void CreateDirectoryDelayedRetry(String directory, int retries=3, int delayinMillis = 500)
+         public static void CreateDirectoryRetry(String directory, int retries=3, int delayinMillis = 500)
          {
             do
             {
@@ -118,7 +125,7 @@ namespace Nereid
                catch(Exception e)
                {
                   Log.Exception(e);
-                  if (retries > 0)
+                  if (retries > 0 && SAVE.configuration.asynchronous)
                   {
                      retries--;
                      Log.Info("retrying operation: create directory in " + delayinMillis+" ms");
@@ -132,7 +139,7 @@ namespace Nereid
             }  while (retries > 0);
          }
 
-         public static void CopyFileDelayedRetry(String from, String to, int retries = 6, int delayinMillis = 200)
+         public static void CopyFileRetry(String from, String to, int retries = 6, int delayinMillis = 200)
          {
             do
             {
@@ -144,7 +151,7 @@ namespace Nereid
                catch (Exception e)
                {
                   Log.Exception(e);
-                  if (retries > 0)
+                  if (retries > 0 && SAVE.configuration.asynchronous)
                   {
                      retries--;
                      Log.Info("retrying operation: copy file in " + delayinMillis + " ms");
@@ -157,6 +164,59 @@ namespace Nereid
                }
             } while (retries > 0);
          }
+
+         public static void DeleteFileRetry(String file, int retries = 6, int delayinMillis = 100)
+         {
+            do
+            {
+               try
+               {
+                  DeleteFile(file);
+                  return;
+               }
+               catch (Exception e)
+               {
+                  Log.Exception(e);
+                  if (retries > 0 && SAVE.configuration.asynchronous)
+                  {
+                     retries--;
+                     Log.Info("retrying operation: delete file in " + delayinMillis + " ms");
+                     Thread.Sleep(delayinMillis);
+                  }
+                  else
+                  {
+                     throw e;
+                  }
+               }
+            } while (retries > 0);
+         }
+
+         public static void DeleteDirectoryRetry(String directory, int retries = 6, int delayinMillis = 100)
+         {
+            do
+            {
+               try
+               {
+                  DeleteDirectory(directory);
+                  return;
+               }
+               catch (Exception e)
+               {
+                  Log.Exception(e);
+                  if (retries > 0 && SAVE.configuration.asynchronous)
+                  {
+                     retries--;
+                     Log.Info("retrying operation: delete directory in " + delayinMillis + " ms");
+                     Thread.Sleep(delayinMillis);
+                  }
+                  else
+                  {
+                     throw e;
+                  }
+               }
+            } while (retries > 0);
+         }
+
 
          public static String[] GetDirectories(String path)
          {
@@ -231,6 +291,8 @@ namespace Nereid
                   writer.Write(configuration.recurseBackup);
                   //
                   writer.Write((Int16)configuration.customBackupInterval);
+                  //
+                  writer.Write(configuration.asynchronous);
                }
             }
             catch(Exception e)
@@ -269,6 +331,8 @@ namespace Nereid
                      configuration.recurseBackup = reader.ReadBoolean();
                      //
                      configuration.customBackupInterval = reader.ReadUInt16();
+                     //
+                     configuration.asynchronous = reader.ReadBoolean();
                   }
                }
                else

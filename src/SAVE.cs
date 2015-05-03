@@ -32,9 +32,11 @@ namespace Nereid
 
          public void Start()
          {
+            Log.SetLevel(Log.LEVEL.INFO);
             Log.Info("start");
             configuration.Load();
-            if (this.gui==null)
+            Log.SetLevel(configuration.logLevel);
+            if (this.gui == null)
             {
                this.gui = this.gameObject.AddComponent<MainMenuGui>();
                this.gui.SetVisible(true);

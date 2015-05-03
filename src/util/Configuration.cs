@@ -24,6 +24,7 @@ namespace Nereid
          public int minNumberOfBackups { get; set; }
          public int maxNumberOfBackups { get; set; }
          public bool recurseBackup { get; set; }
+         public bool asynchronous { get; set; }
          public int customBackupInterval { get; set; }
 
          // non persistent, will set to defaul every start of KSP
@@ -41,6 +42,7 @@ namespace Nereid
             recurseBackup = true;
             customBackupInterval = 1;
             backupBeforeRestore = true;
+            asynchronous = false;
          }
 
 

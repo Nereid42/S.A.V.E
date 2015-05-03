@@ -269,15 +269,7 @@ namespace Nereid
             catch
             {
                Log.Error("failed to finish backup in " + backupFolder);
-               if(preRestore)
-               {
-                  Log.Warning("failed to create pre restore backup");
-                  status = STATUS.CORRUPT;
-               }
-               else
-               {
-                  status = STATUS.FAILED;
-               }
+               status = STATUS.FAILED;
             }
             return backupFolder;
          }
@@ -285,31 +277,48 @@ namespace Nereid
          private void DeleteSaveGameFiles()
          {
             Log.Info("deleting save game files");
-            foreach (String file in FileOperations.GetFiles(pathSaveGame))
+            // does the folder exists?
+            if (FileOperations.DirectoryExists(pathSaveGame))
             {
-               try
+               foreach (String file in FileOperations.GetFiles(pathSaveGame))
                {
-                  FileOperations.DeleteFile(file);
+                  try
+                  {
+                     FileOperations.DeleteFileRetry(file);
+                  }
+                  catch (Exception e)
+                  {
+                     Log.Error("failed to delete file '" + file + "'");
+                     throw e;
+                  }
                }
-               catch(Exception e)
-               {
-                  Log.Error("failed to delete file '" + file + "'");
-                  throw e;
-               }
+            }
+            else
+            {
+               Log.Warning("could not delete save game files (folder not found)");
             }
          }
 
          private void RestoreFilesFromBackup(String backup, bool recurse = false)
          {
             Log.Info("copy game files from backup " + backup);
+            Log.Detail("save game path to restore is '"+pathSaveGame+"'");
             //
             DeleteSaveGameFiles();
+            //
+            // create save game Folder if not existent
+            if (!FileOperations.DirectoryExists(pathSaveGame))
+            {
+               Log.Info("creating save game folder "+pathSaveGame);
+               FileOperations.CreateDirectoryRetry(pathSaveGame);
+            }
             //
             foreach (String file in FileOperations.GetFiles(backup))
             {
                try
                {
                   String name = FileOperations.GetFileName(file);
+                  Log.Detail("restoring file " + name + " from "+file);
                   if (!name.Equals(OK_FILE) && !name.Equals(RESTORED_FILE))
                   {
                      Log.Info("copy file "+name);
@@ -326,11 +335,11 @@ namespace Nereid
             // copy recurse?
             if (recurse)
             {
+               Log.Info("recurse restore");
                foreach (String folder in FileOperations.GetDirectories(backup))
                 {
                    String name = FileOperations.GetFileName(folder);
                    String target =  pathSaveGame + "/" + name;
-                   FileOperations.DeleteDirectory(target);
                    FileOperations.CopyDirectory(folder, target);
                 }
             }
@@ -342,16 +351,25 @@ namespace Nereid
             String backupRootFolder = SAVE.configuration.backupPath + "/" + name;
             try 
             {
+               // restore befor backup?
+               if (SAVE.configuration.backupBeforeRestore)
+               {
+                  if (FileOperations.DirectoryExists(pathSaveGame))
+                  {
+                     CreateBackup(true);
+                     if(status==STATUS.FAILED)
+                     {
+                          Log.Error("backup for save game failed; aborting restore");
+                          return;
+                     }
+                  }
+                  else
+                  {
+                     Log.Warning("backup before restore skipped: no save game found to backup");
+                  }
+               }
+               // restore the game
                status = STATUS.RESTORING;
-               if(SAVE.configuration.backupBeforeRestore)
-               {
-                  CreateBackup(true);
-               }
-               if(status==STATUS.CORRUPT)
-               {
-                  Log.Error("save game is corrupted; aborting restore");
-                  return;
-               }
                RestoreFilesFromBackup(backupRootFolder + "/" + backup, SAVE.configuration.recurseBackup);
                status = STATUS.OK;
             }
