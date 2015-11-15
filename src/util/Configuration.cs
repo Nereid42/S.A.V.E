@@ -16,7 +16,7 @@ namespace Nereid
 
 
          // backup interval
-         public enum BACKUP_INTERVAL { EACH_SAVE = 0, ONCE_IN_10_MINUTES = 1, ONCE_IN_30_MINUTES = 2, ONCE_PER_HOUR = 3, ONCE_PER_DAY = 4, ONCE_PER_WEEK = 5, ONCE_IN_2_HOURS = 6, ONCE_IN_4_HOURS = 7, CUSTOM = 8 }
+         public enum BACKUP_INTERVAL { EACH_SAVE = 0, ONCE_IN_10_MINUTES = 1, ONCE_IN_30_MINUTES = 2, ONCE_PER_HOUR = 3, ONCE_PER_DAY = 4, ONCE_PER_WEEK = 5, ONCE_IN_2_HOURS = 6, ONCE_IN_4_HOURS = 7, CUSTOM = 8, ON_QUIT=9 }
 
          public String backupPath { get; set; }
          public BACKUP_INTERVAL backupInterval { get; set; }
@@ -26,8 +26,9 @@ namespace Nereid
          public bool recurseBackup { get; set; }
          public bool asynchronous { get; set; }
          public int customBackupInterval { get; set; }
+         public bool compressBackups { get; set; }
 
-         // non persistent, will set to defaul every start of KSP
+         // non persistent, will reset to default every start of KSP
          public bool backupBeforeRestore { get; set; }
 
 
@@ -43,6 +44,7 @@ namespace Nereid
             customBackupInterval = 1;
             backupBeforeRestore = true;
             asynchronous = false;
+            compressBackups = false;
          }
 
 

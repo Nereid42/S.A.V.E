@@ -200,6 +200,15 @@ namespace Nereid
                FileOperations.CreateDirectory(backupRootFolder);
             }
 
+            // files to backup
+            String[] gameFiles = FileOperations.GetFiles(pathSaveGame);
+            if(gameFiles==null | gameFiles.Length==0)
+            {
+               Log.Info("no files to backup for backup set "+name);
+               status = STATUS.NONE;
+               return null;
+            }
+
             DateTime time = DateTime.Now;
             String timestamp = time.Hour.ToString("00") + time.Minute.ToString("00") + time.Second.ToString("00");
             String datestamp = time.Year.ToString("0000") + time.Month.ToString("00") + time.Day.ToString("00");
@@ -217,7 +226,7 @@ namespace Nereid
             }
 
             // backup files
-            foreach (String sourceFile in FileOperations.GetFiles(pathSaveGame))
+            foreach (String sourceFile in gameFiles)
             {
                Log.Info("creating backup of file " + sourceFile);
                // do not copy the restore marker
@@ -241,7 +250,7 @@ namespace Nereid
             {
                foreach (String sourceFolder in FileOperations.GetDirectories(pathSaveGame))
                {
-                  Log.Info("creating backup of foldeer " + sourceFolder);
+                  Log.Info("creating backup of folder " + sourceFolder);
                   String foldername = FileOperations.GetFileName(sourceFolder);
                   try
                   {

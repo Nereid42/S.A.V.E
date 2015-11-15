@@ -268,6 +268,12 @@ namespace Nereid
          }
 #endif
 
+         public static bool CompressFolder(String path)
+         {
+            // not yet implemented
+            return false;
+         }
+
          public static void SaveConfiguration(Configuration configuration, String file)
          {
             String filename = CONFIG_BASE_FOLDER + file;
@@ -293,6 +299,8 @@ namespace Nereid
                   writer.Write((Int16)configuration.customBackupInterval);
                   //
                   writer.Write(configuration.asynchronous);
+                  //
+                  writer.Write(configuration.compressBackups);
                }
             }
             catch(Exception e)
@@ -333,6 +341,8 @@ namespace Nereid
                      configuration.customBackupInterval = reader.ReadUInt16();
                      //
                      configuration.asynchronous = reader.ReadBoolean();
+                     //
+                     configuration.compressBackups = reader.ReadBoolean();
                   }
                }
                else

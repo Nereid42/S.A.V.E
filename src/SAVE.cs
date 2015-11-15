@@ -55,7 +55,20 @@ namespace Nereid
 
          private void CallbackGameSceneLoadRequested(GameScenes scene)
          {
-            this.gui.SetVisible(scene == GameScenes.MAINMENU);         
+            Log.Test("SCENE: "+HighLogic.LoadedScene+", requested: "+scene);
+            this.gui.SetVisible(scene == GameScenes.MAINMENU);
+            if (HighLogic.LoadedScene == GameScenes.SPACECENTER && scene == GameScenes.MAINMENU && configuration.backupInterval == Configuration.BACKUP_INTERVAL.ON_QUIT)
+            {
+               String game = HighLogic.SaveFolder;
+               if(name!=null && name.Length>0)
+               {
+                  manager.BackupGame(game);
+               }
+               else
+               {
+                  Log.Warning("failed to save game on quit");
+               }
+            }
          }
 
          internal void OnDestroy()

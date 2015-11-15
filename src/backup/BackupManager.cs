@@ -16,6 +16,7 @@ namespace Nereid
 
          private const String SAVE_GAME_TRAINING = "training";
          private const String SAVE_GAME_SCENARIOS = "scenarios";
+         private const String SAVE_GAME_DESTRUCTIBLES = "scenarios";
 
          private List<BackupSet> backupSets = new List<BackupSet>();
 
@@ -88,7 +89,7 @@ namespace Nereid
 
          private bool BuildInSaveGame(String name)
          {
-            return name.Equals(SAVE_GAME_TRAINING) || name.Equals(SAVE_GAME_SCENARIOS);
+            return name.Equals(SAVE_GAME_TRAINING) || name.Equals(SAVE_GAME_SCENARIOS) || name.Equals(SAVE_GAME_SCENARIOS);
          }
 
          private void AddBackup(String name, String folder)
@@ -230,6 +231,9 @@ namespace Nereid
                   {
                      job = BackupGame(set);
                   }
+                  break;
+               case Configuration.BACKUP_INTERVAL.ON_QUIT:
+                  Log.Detail("backups are done every quit");
                   break;
                default:
                   Log.Error("invalid backup interval ignored; backup is done each save");

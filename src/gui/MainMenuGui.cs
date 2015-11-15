@@ -336,8 +336,13 @@ namespace Nereid
             config.asynchronous = GUILayout.Toggle(config.asynchronous, " Asynchronous backup/restore");
             // recurse
             config.recurseBackup = GUILayout.Toggle(config.recurseBackup, " Recurse subfolders");
+            // compress
+            //GUI.enabled = false;
+            //config.compressBackups = GUILayout.Toggle(config.compressBackups, " Compress backups");
+            //GUI.enabled = true;
             // interval
             GUILayout.Label("Backup interval: ");
+            BackupIntervalToggle(Configuration.BACKUP_INTERVAL.ON_QUIT, "On quit");
             BackupIntervalToggle(Configuration.BACKUP_INTERVAL.EACH_SAVE, "Each save");
             BackupIntervalToggle(Configuration.BACKUP_INTERVAL.ONCE_IN_10_MINUTES, "Once in 10 minutes");
             BackupIntervalToggle(Configuration.BACKUP_INTERVAL.ONCE_IN_30_MINUTES, "Once in 30 minutes");
