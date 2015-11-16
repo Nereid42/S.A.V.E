@@ -30,6 +30,7 @@ namespace Nereid
          private int selectedBackupToRestore = 0;
          private String selectedGameToClone = "";
          private String cloneGameInto = "";
+         private bool cloneBackups = false;
 
          // for All backup dialog
          private int backupCount = 0;
@@ -319,6 +320,7 @@ namespace Nereid
             STYLE_NAME_TEXTFIELD.normal.textColor = Color.white;
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
+            cloneBackups = GUILayout.Toggle(cloneBackups, "Include backups");
             GUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
             GUI.enabled = !cloneExists;
@@ -327,6 +329,10 @@ namespace Nereid
                display = DISPLAY.HIDDEN;
                String backupRootFolder = SAVE.configuration.backupPath + "/" + name;
                SAVE.manager.CloneGame(selectedGameToClone, cloneGameInto);
+               if(cloneBackups)
+               {
+                  SAVE.manager.CloneBackup(selectedGameToClone, cloneGameInto);
+               }
             }
             GUI.enabled = true;
             if (GUILayout.Button("Cancel", GUI.skin.button))

@@ -313,12 +313,12 @@ namespace Nereid
             {
                String from = set.Latest();
                String to = SAVE_ROOT+"/"+into;
-               Log.Info("cloning from '" + from + "' into '" + into + "'");
+               Log.Info("cloning game from '" + from + "' into '" + into + "'");
                if (FileOperations.DirectoryExists(from))
                {
                   if (FileOperations.DirectoryExists(to))
                   {
-                     Log.Error("cloning failed: target folder exists");
+                     Log.Error("cloning of game failed: target folder exists");
                      return;
                   }
                   FileOperations.CopyDirectory(from, to);
@@ -326,12 +326,47 @@ namespace Nereid
                }
                else
                {
-                  Log.Error("cloning failed: no backup folder to clone");
+                  Log.Error("cloning of game failed: no backup folder to clone");
                }
             }
             else
             {
-               Log.Error("cloning failed: no backup set '" + game + "' found");
+               Log.Error("cloning of game failed: no backup set '" + game + "' found");
+            }
+         }
+
+         public void CloneBackup(String game, String into)
+         {
+            Log.Info("cloning backups of '" + game + "' into '" + into + "'");
+            game = FileOperations.GetFileName(game);
+            BackupSet set = GetBackupSetForName(game);
+            if (set != null)
+            {
+               String from = SAVE.configuration.backupPath + "/" + game;
+               String to = SAVE.configuration.backupPath + "/" + into;
+               Log.Info("cloning backup from '" + from + "' into '" + into + "'");
+               if (FileOperations.DirectoryExists(from))
+               {
+                  if (FileOperations.DirectoryExists(to))
+                  {
+                     Log.Error("cloning of backup failed: target folder exists");
+                     return;
+                  }
+                  FileOperations.CopyDirectory(from, to);
+                  BackupSet clone = GetBackupSetForName(into);
+                  if(clone!=null)
+                  {
+                     clone.ScanBackups();
+                  }
+               }
+               else
+               {
+                  Log.Error("cloning of backup failed: no backup folder to clone");
+               }
+            }
+            else
+            {
+               Log.Error("cloning of backup failed: no backup set '" + game + "' found");
             }
          }
 

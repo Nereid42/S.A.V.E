@@ -84,6 +84,7 @@ namespace Nereid
          private String[] GetBackupFolders()
          {
             String backupPath = SAVE.configuration.backupPath + "/" + name;
+            Log.Detail("get backup folders in '" + backupPath + "'");
             try
             {
                String[] files = FileOperations.GetDirectories(backupPath);
@@ -121,15 +122,18 @@ namespace Nereid
 
          public void ScanBackups()
          {
+            Log.Info("scanning backups for " + name);
             backups.Clear();
             String[] backupFolders = GetBackupFolders();
             Array.Reverse(backupFolders);
             status = STATUS.NONE;
             DateTime time = DateTime.MinValue;
+            Log.Detail("found " + backupFolders.Length + " backup folders for " + name);
             for (int i = 0; i < backupFolders.Length; i++)
             {
                String folder = backupFolders[i];
                String backupName = FileOperations.GetFileName(folder);
+               Log.Detail("adding backup " + backupName + " to backup set " + name);
                if (Successful(folder))
                {
                   backups.Add(backupName);
