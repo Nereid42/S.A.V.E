@@ -12,7 +12,7 @@ namespace Nereid
       public class BackupManager : IEnumerable<BackupSet>
       {
          private const int MILLIS_RESTORE_WAIT = 2000;
-         private static String SAVE_ROOT = KSPUtil.ApplicationRootPath+"saves";
+         public static String SAVE_ROOT = KSPUtil.ApplicationRootPath+"saves";
 
          private const String SAVE_GAME_TRAINING = "training";
          private const String SAVE_GAME_SCENARIOS = "scenarios";
@@ -116,8 +116,12 @@ namespace Nereid
                {
                   Log.Info("save game found: "+folder);
                   String name = Path.GetFileName(folder);
-                  Log.Detail("adding backup set " + name);
-                  AddBackup(name, folder);
+
+                  if (GetBackupSetForName(name)==null)
+                  {
+                     Log.Detail("adding backup set " + name);
+                     AddBackup(name, folder);
+                  }
                }
                // scan backups (if save game folder was deleted)
                foreach (String folder in Directory.GetDirectories(SAVE.configuration.backupPath))
@@ -153,7 +157,6 @@ namespace Nereid
             {
                if (set.name.Equals(name)) return set;
             }
-            Log.Warning("no backup set '"+name+"' found");
             return null;
          }
 
@@ -300,6 +303,36 @@ namespace Nereid
                CreateBackupSetNameArray();
             }
             return BackupGame(set);
+         }
+
+         public void CloneGame(String game, String into)
+         {
+            Log.Info("cloning game from backup of '"+game+"' into '"+into+"'");
+            BackupSet set = GetBackupSetForName(game);
+            if (set != null)
+            {
+               String from = set.Latest();
+               String to = SAVE_ROOT+"/"+into;
+               Log.Info("cloning from '" + from + "' into '" + into + "'");
+               if (FileOperations.DirectoryExists(from))
+               {
+                  if (FileOperations.DirectoryExists(to))
+                  {
+                     Log.Error("cloning failed: target folder exists");
+                     return;
+                  }
+                  FileOperations.CopyDirectory(from, to);
+                  ScanSavegames();
+               }
+               else
+               {
+                  Log.Error("cloning failed: no backup folder to clone");
+               }
+            }
+            else
+            {
+               Log.Error("cloning failed: no backup set '" + game + "' found");
+            }
          }
 
          public bool RestoreGame(String game, String from)

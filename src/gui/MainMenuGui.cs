@@ -8,7 +8,7 @@ namespace Nereid
       class MainMenuGui : MonoBehaviour
       {
          private const String TITLE = "S.A.V.E - Automatic Backup System";
-         private const int WIDTH = 300;
+         private const int WIDTH = 400;
          private const int BACKUP_DISPLAY_REMAINS_OPEN_TIME = 5;
 
          private static readonly Rect RECT_GAME_CHOOSER = new Rect(0,10,WIDTH-20, 150);
@@ -17,18 +17,30 @@ namespace Nereid
          private Vector2 gameListscrollPosition = Vector2.zero;
          private Vector2 backupListscrollPosition = Vector2.zero;
 
-         private enum DISPLAY { HIDDEN = 0, BACKUP = 1, RESTORE = 2, CONFIGURE = 3, STATUS = 4, RESTORING = 5 };
+         private enum DISPLAY { HIDDEN = 0, BACKUP = 1, RESTORE = 2, CONFIGURE = 3, STATUS = 4, RESTORING = 5, CLONE = 6, CLONING = 7 };
          private DISPLAY display = DISPLAY.HIDDEN;
+
+         private GUIStyle STYLE_BACKUPSET_NAME = null;
+         private GUIStyle STYLE_BACKUPSET_STATUS = null;
+         private GUIStyle STYLE_RECOVER_BUTTON = null;
+         private GUIStyle STYLE_NAME_TEXTFIELD = null;
 
 
          private int selectedGameToRestore = 0;
          private int selectedBackupToRestore = 0;
+         private String selectedGameToClone = "";
+         private String cloneGameInto = "";
 
          // for All backup dialog
          private int backupCount = 0;
          private DateTime backupCloseTime;
 
          private volatile bool visible = false;
+
+         public MainMenuGui()
+         {
+
+         }
 
          // 
          protected void OnGUI()
@@ -86,6 +98,8 @@ namespace Nereid
                // Status
                DrawDisplayToggle("Status", DISPLAY.STATUS);
                // Hide
+               DrawDisplayToggle("Clone", DISPLAY.CLONE);
+               // Hide
                DrawDisplayToggle("Hide", DISPLAY.HIDDEN);
                GUILayout.EndHorizontal();
                //
@@ -105,6 +119,12 @@ namespace Nereid
                      break;
                   case DISPLAY.STATUS:
                      DisplayStatus();
+                     break;
+                  case DISPLAY.CLONE:
+                     DisplayClone();
+                     break;
+                  case DISPLAY.CLONING:
+                     DisplayCloning();
                      break;
                   case DISPLAY.HIDDEN:
                      // are we ingame? then make the window disappear (this shouldn't be neccessary, but just to be sure...)
@@ -240,17 +260,108 @@ namespace Nereid
             GUILayout.EndVertical();
          }
 
+         private void InitStyles()
+         {
+            // for some reasons, this styles cant be created in the constructor
+            // but we wont want to create a new instance every frame...
+            if (STYLE_BACKUPSET_NAME == null)
+            {
+               STYLE_BACKUPSET_NAME = new GUIStyle(GUI.skin.label);
+               STYLE_BACKUPSET_NAME.stretchWidth = false;
+               STYLE_BACKUPSET_NAME.fixedWidth = 220;
+               STYLE_BACKUPSET_NAME.wordWrap = false;
+            }
+            if (STYLE_BACKUPSET_STATUS == null)
+            {
+               STYLE_BACKUPSET_STATUS = new GUIStyle(GUI.skin.label);
+               STYLE_BACKUPSET_STATUS.stretchWidth = false;
+               STYLE_BACKUPSET_STATUS.margin = new RectOffset(20, 0, 4, 0);
+               STYLE_BACKUPSET_STATUS.fixedWidth = 70;
+            }
+            if (STYLE_RECOVER_BUTTON == null)
+            {
+               STYLE_RECOVER_BUTTON = new GUIStyle(GUI.skin.button);
+               STYLE_RECOVER_BUTTON.stretchWidth = false;
+               STYLE_RECOVER_BUTTON.fixedWidth = 70;
+            }
+            if (STYLE_NAME_TEXTFIELD == null)
+            {
+               STYLE_NAME_TEXTFIELD = new GUIStyle(GUI.skin.textField);
+               STYLE_NAME_TEXTFIELD.stretchWidth = false;
+               STYLE_NAME_TEXTFIELD.fixedWidth = 355;
+               STYLE_NAME_TEXTFIELD.wordWrap = false;
+            }
+         }
+
+         private void DisplayCloning()
+         {
+            InitStyles();
+            //
+            //
+            DrawTitle("Cloning game from backup");
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Cloning ");
+            GUILayout.Label(selectedGameToClone, STYLE_BACKUPSET_NAME);
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Into ");
+            bool cloneExists = FileOperations.DirectoryExists(BackupManager.SAVE_ROOT+"/"+cloneGameInto);
+            if (cloneExists)
+            {
+               STYLE_NAME_TEXTFIELD.normal.textColor = Color.red;
+            }
+            else
+            {
+               STYLE_NAME_TEXTFIELD.normal.textColor = Color.white;
+            }
+            cloneGameInto = GUILayout.TextField(cloneGameInto, STYLE_NAME_TEXTFIELD);
+            STYLE_NAME_TEXTFIELD.normal.textColor = Color.white;
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+            GUILayout.BeginHorizontal();
+            GUILayout.FlexibleSpace();
+            GUI.enabled = !cloneExists;
+            if (GUILayout.Button("Clone", GUI.skin.button))
+            {
+               display = DISPLAY.HIDDEN;
+               String backupRootFolder = SAVE.configuration.backupPath + "/" + name;
+               SAVE.manager.CloneGame(selectedGameToClone, cloneGameInto);
+            }
+            GUI.enabled = true;
+            if (GUILayout.Button("Cancel", GUI.skin.button))
+            {
+               display = DISPLAY.HIDDEN;
+            }
+            GUILayout.EndHorizontal();
+         }
+
+         private void DisplayClone()
+         {
+            InitStyles();
+
+            DrawTitle("Games");
+            foreach (BackupSet set in SAVE.manager)
+            {
+               GUILayout.BeginHorizontal();
+               GUILayout.Label(set.name, STYLE_BACKUPSET_NAME);
+               GUILayout.FlexibleSpace();
+               GUI.enabled = set.Latest() != null;
+               if (GUILayout.Button("Clone", STYLE_RECOVER_BUTTON))
+               {
+                  selectedGameToClone = set.name;
+                  cloneGameInto = set.name + "-clone";
+                  display = DISPLAY.CLONING;
+               }
+               GUI.enabled = true;
+               GUILayout.EndHorizontal();
+            }
+         }
+
+
          private void DisplayStatus()
          {
-            GUIStyle STYLE_BACKUPSET_NAME = new GUIStyle(GUI.skin.label);
-            GUIStyle STYLE_BACKUPSET_STATUS = new GUIStyle(GUI.skin.label);
-            GUIStyle STYLE_RECOVER_BUTTON = new GUIStyle(GUI.skin.button);
-            STYLE_BACKUPSET_NAME.stretchWidth = false;
-            STYLE_BACKUPSET_NAME.fixedWidth = 150;
-            STYLE_BACKUPSET_STATUS.stretchWidth = false;
-            STYLE_BACKUPSET_STATUS.fixedWidth = 70;
-            STYLE_RECOVER_BUTTON.stretchWidth = false;
-            STYLE_RECOVER_BUTTON.fixedWidth = 80;
+            InitStyles();
             DrawTitle("Games");
             foreach (BackupSet set in SAVE.manager)
             {

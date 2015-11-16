@@ -1,0 +1,14 @@
+{
+    "spec_version" : 1,
+    "identifier"   : "S.A.V.E",
+    "$kref"        : "#/ckan/kerbalstuff/466",
+	"$vref"        : "#/ckan/ksp-avc",
+    "x_netkan_license_ok": true,
+	
+    "install": [
+        {
+            "file"       : "GameData/Nereid/S.A.V.E",
+            "install_to" : "GameData/Nereid"
+        }
+    ]	
+}

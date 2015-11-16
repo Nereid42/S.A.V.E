@@ -404,6 +404,16 @@ namespace Nereid
             }
          }
 
+         public String Latest()
+         {
+            String[] backupFolders = GetBackupFolders();
+            if(backupFolders!=null && backupFolders.Length>0)
+            {
+               return backupFolders[backupFolders.Length - 1];
+            }
+            return null;
+         }
+
          public void Cleanup()
          {
             Log.Info("cleaning up backup "+name);

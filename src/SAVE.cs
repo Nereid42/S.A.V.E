@@ -55,7 +55,6 @@ namespace Nereid
 
          private void CallbackGameSceneLoadRequested(GameScenes scene)
          {
-            Log.Test("SCENE: "+HighLogic.LoadedScene+", requested: "+scene);
             this.gui.SetVisible(scene == GameScenes.MAINMENU);
             if (HighLogic.LoadedScene == GameScenes.SPACECENTER && scene == GameScenes.MAINMENU && configuration.backupInterval == Configuration.BACKUP_INTERVAL.ON_QUIT)
             {
