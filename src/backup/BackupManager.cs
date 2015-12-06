@@ -263,18 +263,18 @@ namespace Nereid
             allBackupsCompleted = false;
             foreach (BackupSet set in backupSets)
             {
-               BackupGame(set);
+               BackupGame(set, true);
                cnt++;
             }
             return cnt;
          }
 
-         public BackupJob BackupGame(BackupSet set)
+         public BackupJob BackupGame(BackupSet set, bool forceAsynchronous = false)
          {
             Log.Info("adding backup job for " + set.name+" ("+backupQueue.Size()+" backups in queue)");
             allBackupsCompleted = false;
             BackupJob job = new BackupJob(set);
-            if (SAVE.configuration.asynchronous)
+            if (SAVE.configuration.asynchronous || forceAsynchronous)
             {
                Log.Info("adding backup job for " + set.name + " (" + backupQueue.Size() + " backups in queue)");
                backupQueue.Enqueue(job);

@@ -333,6 +333,7 @@ namespace Nereid
 
          public static void CompressAndDeleteFile(FileInfo file)
          {
+            CheckPathForWriteOperation(file.FullName);
             Log.Detail("compressing file " + file.Name);
             CompressFile(file);
             Log.Detail("deleting file " + file.Name);
@@ -342,6 +343,7 @@ namespace Nereid
 
          public static void DecompressAndDeleteFile(FileInfo file)
          {
+            CheckPathForWriteOperation(file.FullName);
             Log.Detail("decompressing file " + file.Name);
             DecompressFile(file);
             Log.Detail("deleting file " + file.Name);

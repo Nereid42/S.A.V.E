@@ -14,13 +14,16 @@ namespace Nereid
          private static readonly Rect RECT_GAME_CHOOSER = new Rect(0,10,WIDTH-20, 150);
 
          private Rect bounds = new Rect(0, 0, WIDTH, 0);
-         private Vector2 gameListscrollPosition = Vector2.zero;
+         private Vector2 restoreListscrollPosition = Vector2.zero;
          private Vector2 backupListscrollPosition = Vector2.zero;
+         private Vector2 statusListscrollPosition = Vector2.zero;
+         private Vector2 cloneListscrollPosition = Vector2.zero;
 
          private enum DISPLAY { HIDDEN = 0, BACKUP = 1, RESTORE = 2, CONFIGURE = 3, STATUS = 4, RESTORING = 5, CLONE = 6, CLONING = 7 };
          private DISPLAY display = DISPLAY.HIDDEN;
 
-         private GUIStyle STYLE_BACKUPSET_NAME = null;
+         private GUIStyle STYLE_BACKUPSET_STATUS_NAME = null;
+         private GUIStyle STYLE_BACKUPSET_CLONE_NAME = null;
          private GUIStyle STYLE_BACKUPSET_STATUS = null;
          private GUIStyle STYLE_RECOVER_BUTTON = null;
          private GUIStyle STYLE_NAME_TEXTFIELD = null;
@@ -70,7 +73,7 @@ namespace Nereid
             {
                GUILayout.BeginVertical();
                GUILayout.BeginHorizontal();
-               if (!SAVE.manager.RestoreCompleted())
+               if (!SAVE.manager.RestoreCompleted() || !SAVE.manager.BackupsCompleted())
                {
                   GUI.enabled = false;
                }
@@ -229,7 +232,7 @@ namespace Nereid
 
             GUILayout.BeginVertical();
             DrawTitle("Restore game");
-            gameListscrollPosition = GUILayout.BeginScrollView(gameListscrollPosition, GUI.skin.box, GUILayout.Height(105));
+            restoreListscrollPosition = GUILayout.BeginScrollView(restoreListscrollPosition, GUI.skin.box, GUILayout.Height(105));
             selectedGameToRestore = GUILayout.SelectionGrid(selectedGameToRestore, games, 1);
             String game = games[selectedGameToRestore];
             GUILayout.EndScrollView();
@@ -265,25 +268,32 @@ namespace Nereid
          {
             // for some reasons, this styles cant be created in the constructor
             // but we wont want to create a new instance every frame...
-            if (STYLE_BACKUPSET_NAME == null)
+            if (STYLE_BACKUPSET_STATUS_NAME == null)
             {
-               STYLE_BACKUPSET_NAME = new GUIStyle(GUI.skin.label);
-               STYLE_BACKUPSET_NAME.stretchWidth = false;
-               STYLE_BACKUPSET_NAME.fixedWidth = 220;
-               STYLE_BACKUPSET_NAME.wordWrap = false;
+               STYLE_BACKUPSET_STATUS_NAME = new GUIStyle(GUI.skin.label);
+               STYLE_BACKUPSET_STATUS_NAME.stretchWidth = false;
+               STYLE_BACKUPSET_STATUS_NAME.fixedWidth = 210;
+               STYLE_BACKUPSET_STATUS_NAME.wordWrap = false;
+            }
+            if (STYLE_BACKUPSET_CLONE_NAME == null)
+            {
+               STYLE_BACKUPSET_CLONE_NAME = new GUIStyle(GUI.skin.label);
+               STYLE_BACKUPSET_CLONE_NAME.stretchWidth = false;
+               STYLE_BACKUPSET_CLONE_NAME.fixedWidth = 290;
+               STYLE_BACKUPSET_CLONE_NAME.wordWrap = false;
             }
             if (STYLE_BACKUPSET_STATUS == null)
             {
                STYLE_BACKUPSET_STATUS = new GUIStyle(GUI.skin.label);
                STYLE_BACKUPSET_STATUS.stretchWidth = false;
-               STYLE_BACKUPSET_STATUS.margin = new RectOffset(20, 0, 4, 0);
-               STYLE_BACKUPSET_STATUS.fixedWidth = 70;
+               STYLE_BACKUPSET_STATUS.margin = new RectOffset(15, 0, 4, 0);
+               STYLE_BACKUPSET_STATUS.fixedWidth = 60;
             }
             if (STYLE_RECOVER_BUTTON == null)
             {
                STYLE_RECOVER_BUTTON = new GUIStyle(GUI.skin.button);
                STYLE_RECOVER_BUTTON.stretchWidth = false;
-               STYLE_RECOVER_BUTTON.fixedWidth = 70;
+               STYLE_RECOVER_BUTTON.fixedWidth = 65;
             }
             if (STYLE_NAME_TEXTFIELD == null)
             {
@@ -302,7 +312,7 @@ namespace Nereid
             DrawTitle("Cloning game from backup");
             GUILayout.BeginHorizontal();
             GUILayout.Label("Cloning ");
-            GUILayout.Label(selectedGameToClone, STYLE_BACKUPSET_NAME);
+            GUILayout.Label(selectedGameToClone, STYLE_BACKUPSET_CLONE_NAME);
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
             GUILayout.BeginHorizontal();
@@ -347,10 +357,11 @@ namespace Nereid
             InitStyles();
 
             DrawTitle("Games");
+            cloneListscrollPosition = GUILayout.BeginScrollView(cloneListscrollPosition, GUI.skin.box, GUILayout.Height(Screen.height - 100));
             foreach (BackupSet set in SAVE.manager)
             {
                GUILayout.BeginHorizontal();
-               GUILayout.Label(set.name, STYLE_BACKUPSET_NAME);
+               GUILayout.Label(set.name, STYLE_BACKUPSET_CLONE_NAME);
                GUILayout.FlexibleSpace();
                GUI.enabled = set.Latest() != null;
                if (GUILayout.Button("Clone", STYLE_RECOVER_BUTTON))
@@ -362,6 +373,7 @@ namespace Nereid
                GUI.enabled = true;
                GUILayout.EndHorizontal();
             }
+            GUILayout.EndScrollView();
          }
 
 
@@ -369,10 +381,11 @@ namespace Nereid
          {
             InitStyles();
             DrawTitle("Games");
+            statusListscrollPosition = GUILayout.BeginScrollView(statusListscrollPosition, GUI.skin.box, GUILayout.Height(Screen.height-100));
             foreach (BackupSet set in SAVE.manager)
             {
                GUILayout.BeginHorizontal();
-               GUILayout.Label(set.name, STYLE_BACKUPSET_NAME);
+               GUILayout.Label(set.name, STYLE_BACKUPSET_STATUS_NAME);
                GUILayout.Label(set.status.ToString(), STYLE_BACKUPSET_STATUS);
                GUI.enabled = SAVE.manager.RestoreCompleted() && SAVE.manager.BackupsCompleted() && set.status != BackupSet.STATUS.NONE;
                if(GUILayout.Button("Restore", STYLE_RECOVER_BUTTON))
@@ -384,6 +397,7 @@ namespace Nereid
                GUI.enabled = true;
                GUILayout.EndHorizontal();
             }
+            GUILayout.EndScrollView();
          }
 
          private int IndexOf(String s, String[] a)
