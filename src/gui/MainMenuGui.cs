@@ -272,7 +272,7 @@ namespace Nereid
             {
                STYLE_BACKUPSET_STATUS_NAME = new GUIStyle(GUI.skin.label);
                STYLE_BACKUPSET_STATUS_NAME.stretchWidth = false;
-               STYLE_BACKUPSET_STATUS_NAME.fixedWidth = 210;
+               STYLE_BACKUPSET_STATUS_NAME.fixedWidth = 234;
                STYLE_BACKUPSET_STATUS_NAME.wordWrap = false;
             }
             if (STYLE_BACKUPSET_CLONE_NAME == null)
