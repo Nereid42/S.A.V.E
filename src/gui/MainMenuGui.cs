@@ -454,9 +454,8 @@ namespace Nereid
             // recurse
             config.recurseBackup = GUILayout.Toggle(config.recurseBackup, " Recurse subfolders");
             // compress
-            //GUI.enabled = false;
-            //config.compressBackups = GUILayout.Toggle(config.compressBackups, " Compress backups");
-            //GUI.enabled = true;
+            // not working right now
+            config.compressBackups = GUILayout.Toggle(config.compressBackups, " Compress backups");
             // interval
             GUILayout.Label("Backup interval: ");
             BackupIntervalToggle(Configuration.BACKUP_INTERVAL.ON_QUIT, "On quit");

@@ -1,0 +1,9 @@
+This software uses a modified version of the LZMA SDK, provided by Igor Pavlov on  
+
+http://www.7-zip.org/sdk.html
+
+
+All sources of the LZMA SDK are placed in the folder Source/7zip and are licensed as public domain.
+
+See http://www.7-zip.org/ for furtehr information.
+

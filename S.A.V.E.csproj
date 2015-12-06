@@ -48,6 +48,21 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="src\7zip\Common\CommandLineParser.cs" />
+    <Compile Include="src\7zip\Common\CRC.cs" />
+    <Compile Include="src\7zip\Common\InBuffer.cs" />
+    <Compile Include="src\7zip\Common\OutBuffer.cs" />
+    <Compile Include="src\7zip\Compress\LZMA\LzmaBase.cs" />
+    <Compile Include="src\7zip\Compress\LZMA\LzmaDecoder.cs" />
+    <Compile Include="src\7zip\Compress\LZMA\LzmaEncoder.cs" />
+    <Compile Include="src\7zip\Compress\RangeCoder\RangeCoder.cs" />
+    <Compile Include="src\7zip\Compress\RangeCoder\RangeCoderBit.cs" />
+    <Compile Include="src\7zip\Compress\RangeCoder\RangeCoderBitTree.cs" />
+    <Compile Include="src\7zip\ICoder.cs" />
+    <Compile Include="src\7zip\IMatchFinder.cs" />
+    <Compile Include="src\7zip\LzBinTree.cs" />
+    <Compile Include="src\7zip\LzInWindow.cs" />
+    <Compile Include="src\7zip\LzOutWindow.cs" />
     <Compile Include="src\backup\Job.cs" />
     <Compile Include="src\backup\RestoreJob.cs" />
     <Compile Include="src\backup\BackupJob.cs" />
@@ -57,6 +72,7 @@
     <Compile Include="src\SAVE.cs" />
     <Compile Include="src\util\BlockingQueue.cs" />
     <Compile Include="src\util\Configuration.cs" />
+    <Compile Include="src\util\io\CompressionConstants.cs" />
     <Compile Include="src\util\io\FileOperations.cs" />
     <Compile Include="src\util\Log.cs" />
   </ItemGroup>

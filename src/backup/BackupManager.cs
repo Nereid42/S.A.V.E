@@ -337,7 +337,7 @@ namespace Nereid
 
          public void CloneBackup(String game, String into)
          {
-            Log.Info("cloning backups of '" + game + "' into '" + into + "'");
+            Log.Info("cloning backup of '" + game + "' into '" + into + "'");
             game = FileOperations.GetFileName(game);
             BackupSet set = GetBackupSetForName(game);
             if (set != null)

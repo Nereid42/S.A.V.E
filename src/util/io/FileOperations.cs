@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
+using Nereid.SevenZip.Compression.LZMA;
 
 
 namespace Nereid
@@ -15,6 +16,8 @@ namespace Nereid
    {
       public static class FileOperations
       {
+         private const String COMPRESSED_SUFFIX = ".save.compressed";
+
          private static readonly String ROOT_PATH = KSPUtil.ApplicationRootPath;
          private static readonly String CONFIG_BASE_FOLDER = ROOT_PATH + "/GameData/";
 
@@ -268,11 +271,137 @@ namespace Nereid
          }
 #endif
 
+         public static bool CompressFolder(DirectoryInfo folder)
+         {
+            try
+            {
+               foreach (FileInfo file in folder.GetFiles())
+               {
+                  if (!file.Name.EndsWith(COMPRESSED_SUFFIX) && !file.Name.StartsWith(".") && file.Length>0)
+                  {
+                     CompressAndDeleteFile(file);
+                  }
+               }
+               foreach (DirectoryInfo subfolder in folder.GetDirectories())
+               {
+                  CompressFolder(subfolder);
+               }
+            }
+            catch (Exception e)
+            {
+               Log.Error("failed to compress folder " + folder.Name + ": " + e.Message);
+               return false;
+            }
+            return true;
+         }
+
+
          public static bool CompressFolder(String path)
          {
-            // not yet implemented
-            return false;
+            return CompressFolder(new DirectoryInfo(path));
          }
+
+         public static bool DecompressFolder(DirectoryInfo folder)
+         {
+            Log.Detail("decompressing folder " + folder.Name);
+            try
+            {
+               foreach (FileInfo file in folder.GetFiles())
+               {
+                  if (file.Name.EndsWith(COMPRESSED_SUFFIX))
+                  {
+                     DecompressAndDeleteFile(file);
+                  }
+               }
+               foreach (DirectoryInfo subfolder in folder.GetDirectories())
+               {
+                  DecompressFolder(subfolder);
+               }
+            }
+            catch (Exception e)
+            {
+               Log.Error("failed to decompress folder " + folder.Name+": "+e.Message);
+               return false;
+            }
+            return true;
+         }
+
+         public static bool DecompressFolder(String path)
+         {
+            return DecompressFolder(new DirectoryInfo(path));
+         }
+
+         public static void CompressAndDeleteFile(FileInfo file)
+         {
+            Log.Detail("compressing file " + file.Name);
+            CompressFile(file);
+            Log.Detail("deleting file " + file.Name);
+            file.Delete();
+            Log.Detail(file.Name + " compressed and deleted");
+         }
+
+         public static void DecompressAndDeleteFile(FileInfo file)
+         {
+            Log.Detail("decompressing file " + file.Name);
+            DecompressFile(file);
+            Log.Detail("deleting file " + file.Name);
+            file.Delete();
+            Log.Detail(file.Name+" decompressed and deleted");
+         }
+
+         public static void CompressFile(FileInfo fi)
+         {
+            try
+            {
+               String outputName = fi.FullName + COMPRESSED_SUFFIX;
+               using (FileStream inStream = fi.OpenRead())
+               {
+                  using (FileStream outStream = new FileStream(outputName, FileMode.Create, FileAccess.Write))
+                  {
+                     Encoder encoder = new Encoder();
+                     BinaryWriter writer = new BinaryWriter(outStream);
+                     writer.Write(fi.Length);
+                     encoder.SetCoderProperties(CompressionConstants.propIDs, CompressionConstants.properties);
+                     encoder.WriteCoderProperties(outStream);
+                     encoder.Code(inStream, outStream, -1, -1, null);
+                  }
+               }
+            }
+            catch (Exception e)
+            {
+               System.Console.WriteLine("Exception CompressFile: " + e.GetType() + " " + e.Message);
+               throw e;
+            }
+         }
+
+         public static void DecompressFile(FileInfo fi)
+         {
+            try
+            {
+               String outputName = fi.FullName.Substring(0, fi.FullName.Length - COMPRESSED_SUFFIX.Length);
+               using (FileStream inStream = fi.OpenRead())
+               {
+                  using (FileStream outStream = new FileStream(outputName, FileMode.Create, FileAccess.Write))
+                  {
+                     Decoder decoder = new Decoder();
+                     BinaryReader reader = new BinaryReader(inStream);
+                     long outSize = reader.ReadInt64();
+                     long compressedSize = inStream.Length - inStream.Position;
+                     byte[] properties = new byte[5];
+                     if (inStream.Read(properties, 0, 5) != 5)
+                        throw (new Exception("input is too short"));
+                     decoder.SetDecoderProperties(properties);
+                     decoder.Code(inStream, outStream, compressedSize, outSize, null);
+                  }
+               }
+            }
+            catch (Exception e)
+            {
+               System.Console.WriteLine("Exception DecompressFile: " + e.GetType() + " " + e.Message);
+               throw e;
+            }
+         }
+
 
          public static void SaveConfiguration(Configuration configuration, String file)
          {

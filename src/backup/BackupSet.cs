@@ -193,6 +193,19 @@ namespace Nereid
             status = STATUS.FAILED;
          }
 
+         private void CompressBackup(String folder)
+         {
+           Log.Info("compressing backup " + folder);
+            if(FileOperations.CompressFolder(folder))
+            {
+               Log.Info("backup succesfully compressed");
+            }
+            else
+            {
+               Log.Error("failed to compress backup "+folder);
+               status = STATUS.FAILED;
+            }
+         }
 
          public String CreateBackup(bool preRestore = false)
          {
@@ -277,12 +290,22 @@ namespace Nereid
                backups.Add(backupName);
                SortBackupsByName();
                CreateBackupArray();
+               // compress backup if enabled
+               if(SAVE.configuration.compressBackups)
+               {
+                  CompressBackup(backupFolder);
+               }
+               else
+               {
+                  Log.Detail("backup compression disabled");
+               }
                Log.Info("backup successful in " + backupFolder );
             }
             catch
             {
                Log.Error("failed to finish backup in " + backupFolder);
                status = STATUS.FAILED;
+               return backupFolder;
             }
             return backupFolder;
          }
@@ -384,7 +407,16 @@ namespace Nereid
                // restore the game
                status = STATUS.RESTORING;
                RestoreFilesFromBackup(backupRootFolder + "/" + backup, SAVE.configuration.recurseBackup);
-               status = STATUS.OK;
+               // uncompress all compressed files
+               if(FileOperations.DecompressFolder(pathSaveGame))
+               {
+                  status = STATUS.OK;
+               }
+               else
+               {
+                  status = STATUS.CORRUPT;
+                  Log.Error("failed to decompress files");
+               }
             }
             catch (Exception e)
             {

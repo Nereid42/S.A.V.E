@@ -1,3 +1,8 @@
+-------------------------------------------------------------------------
+The following license holds for all source code with the exception of all 
+source code in the folder Source/7zip.
+-------------------------------------------------------------------------
+
                     GNU GENERAL PUBLIC LICENSE
                        Version 3, 29 June 2007
 
