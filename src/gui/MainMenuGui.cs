@@ -10,6 +10,10 @@ namespace Nereid
          private const String TITLE = "S.A.V.E - Automatic Backup System";
          private const int WIDTH = 400;
          private const int BACKUP_DISPLAY_REMAINS_OPEN_TIME = 5;
+         //
+         private const int SELECTION_GRID_WIDTH = 362;
+         private const int CONFIG_TEXTFIELD_RIGHT_MARGIN = 165;
+
 
          private static readonly Rect RECT_GAME_CHOOSER = new Rect(0,10,WIDTH-20, 150);
 
@@ -27,6 +31,9 @@ namespace Nereid
          private GUIStyle STYLE_BACKUPSET_STATUS = null;
          private GUIStyle STYLE_RECOVER_BUTTON = null;
          private GUIStyle STYLE_NAME_TEXTFIELD = null;
+         private GUIStyle STYLE_CONFIG_BACKUP_PATH_LABEL = null;
+         private GUIStyle STYLE_CONFIG_BACKUP_PATH_FIELD = null;
+         private GUIStyle STYLE_CONFIG_TEXTFIELD = null;
 
 
          private int selectedGameToRestore = 0;
@@ -73,10 +80,7 @@ namespace Nereid
             {
                GUILayout.BeginVertical();
                GUILayout.BeginHorizontal();
-               if (!SAVE.manager.RestoreCompleted() || !SAVE.manager.BackupsCompleted())
-               {
-                  GUI.enabled = false;
-               }
+               GUI.enabled = SAVE.manager.RestoreCompleted() && SAVE.manager.BackupsCompleted();
                if (GUILayout.Button("Backup All", GUI.skin.button))
                {
                   display = DISPLAY.BACKUP;
@@ -232,18 +236,19 @@ namespace Nereid
 
             GUILayout.BeginVertical();
             DrawTitle("Restore game");
-            restoreListscrollPosition = GUILayout.BeginScrollView(restoreListscrollPosition, GUI.skin.box, GUILayout.Height(105));
-            selectedGameToRestore = GUILayout.SelectionGrid(selectedGameToRestore, games, 1);
+            restoreListscrollPosition = GUILayout.BeginScrollView(restoreListscrollPosition, false, true, GUI.skin.horizontalScrollbar, GUI.skin.verticalScrollbar, GUI.skin.box, GUILayout.Height(155));
+            selectedGameToRestore = GUILayout.SelectionGrid(selectedGameToRestore, games, 1, GUILayout.Width(SELECTION_GRID_WIDTH));
             String game = games[selectedGameToRestore];
             GUILayout.EndScrollView();
             BackupSet backupSet = SAVE.manager.GetBackupSetForName(games[selectedGameToRestore]);
             String[] backups = backupSet.GetBackupsAsArray();
             GUILayout.Label("From backup", HighLogic.Skin.label);
-            backupListscrollPosition = GUILayout.BeginScrollView(backupListscrollPosition, GUI.skin.box, GUILayout.Height(210));
-            selectedBackupToRestore = GUILayout.SelectionGrid(selectedBackupToRestore, backups, 1);
+            backupListscrollPosition = GUILayout.BeginScrollView(backupListscrollPosition, false, true, GUI.skin.horizontalScrollbar, GUI.skin.verticalScrollbar, GUI.skin.box, GUILayout.Height(205));
+            selectedBackupToRestore = GUILayout.SelectionGrid(selectedBackupToRestore, backups, 1, GUILayout.Width(SELECTION_GRID_WIDTH));
             String backup = backups.Length>0?backups[selectedBackupToRestore]:"";
             GUILayout.EndScrollView();
-            SAVE.configuration.backupBeforeRestore = GUILayout.Toggle(SAVE.configuration.backupBeforeRestore, "Create a backup before restore");
+            SAVE.configuration.backupBeforeRestore = GUILayout.Toggle(SAVE.configuration.backupBeforeRestore, " Create a backup before restore");
+            SAVE.configuration.disabled = GUILayout.Toggle(SAVE.configuration.disabled, " Temporary disable backups until restart");
             GUILayout.BeginHorizontal();
             GUILayout.Label("");
             GUILayout.FlexibleSpace();
@@ -267,7 +272,7 @@ namespace Nereid
          private void InitStyles()
          {
             // for some reasons, this styles cant be created in the constructor
-            // but we wont want to create a new instance every frame...
+            // but we do not want to create a new instance every frame...
             if (STYLE_BACKUPSET_STATUS_NAME == null)
             {
                STYLE_BACKUPSET_STATUS_NAME = new GUIStyle(GUI.skin.label);
@@ -301,6 +306,23 @@ namespace Nereid
                STYLE_NAME_TEXTFIELD.stretchWidth = false;
                STYLE_NAME_TEXTFIELD.fixedWidth = 355;
                STYLE_NAME_TEXTFIELD.wordWrap = false;
+            }
+            if (STYLE_CONFIG_BACKUP_PATH_LABEL == null)
+            {
+               STYLE_CONFIG_BACKUP_PATH_LABEL = new GUIStyle(GUI.skin.label);
+            }
+            if (STYLE_CONFIG_BACKUP_PATH_FIELD == null)
+            {
+               STYLE_CONFIG_BACKUP_PATH_FIELD = new GUIStyle(GUI.skin.textField);
+               STYLE_CONFIG_BACKUP_PATH_FIELD.stretchWidth = false;
+               STYLE_CONFIG_BACKUP_PATH_FIELD.fixedWidth = 295;
+            }
+            if (STYLE_CONFIG_TEXTFIELD == null)
+            {
+               STYLE_CONFIG_TEXTFIELD = new GUIStyle(GUI.skin.textField);
+               STYLE_CONFIG_TEXTFIELD.stretchWidth = false;
+               STYLE_CONFIG_TEXTFIELD.fixedWidth = 60;
+               //STYLE_CONFIG_TEXTFIELD.margin = new RectOffset(0,200,0,0);
             }
          }
 
@@ -355,7 +377,7 @@ namespace Nereid
          private void DisplayClone()
          {
             InitStyles();
-
+            //
             DrawTitle("Games");
             cloneListscrollPosition = GUILayout.BeginScrollView(cloneListscrollPosition, GUI.skin.box, GUILayout.Height(Screen.height - 100));
             foreach (BackupSet set in SAVE.manager)
@@ -380,6 +402,7 @@ namespace Nereid
          private void DisplayStatus()
          {
             InitStyles();
+            //
             DrawTitle("Games");
             statusListscrollPosition = GUILayout.BeginScrollView(statusListscrollPosition, GUI.skin.box, GUILayout.Height(Screen.height-100));
             foreach (BackupSet set in SAVE.manager)
@@ -421,14 +444,9 @@ namespace Nereid
 
          private void DisplayConfigure()
          {
+            InitStyles();
+            //
             Configuration config = SAVE.configuration;
-            GUIStyle STYLE_BACKUP_PATH_LABEL = new GUIStyle(GUI.skin.label);
-            GUIStyle STYLE_BACKUP_PATH_FIELD = new GUIStyle(GUI.skin.textField);
-            STYLE_BACKUP_PATH_FIELD.stretchWidth = false;
-            STYLE_BACKUP_PATH_FIELD.fixedWidth = 190;
-            GUIStyle STYLE_TEXTFIELD = new GUIStyle(GUI.skin.textField);
-            STYLE_TEXTFIELD.stretchWidth = false;
-            STYLE_TEXTFIELD.fixedWidth = 60;
             //
             GUILayout.BeginVertical();
             DrawTitle("Configuration");
@@ -446,23 +464,25 @@ namespace Nereid
             {
                if (FileOperations.InsideApplicationRootPath(config.backupPath))
                {
-                  STYLE_BACKUP_PATH_FIELD.normal.textColor = GUI.skin.textField.normal.textColor;
-                  STYLE_BACKUP_PATH_LABEL.normal.textColor = GUI.skin.label.normal.textColor;
+                  STYLE_CONFIG_BACKUP_PATH_FIELD.normal.textColor = GUI.skin.textField.normal.textColor;
+                  STYLE_CONFIG_BACKUP_PATH_LABEL.normal.textColor = GUI.skin.label.normal.textColor;
                }
                else
                {
-                  STYLE_BACKUP_PATH_FIELD.normal.textColor = Color.yellow;
-                  STYLE_BACKUP_PATH_LABEL.normal.textColor = Color.yellow;
+                  STYLE_CONFIG_BACKUP_PATH_FIELD.normal.textColor = Color.yellow;
+                  STYLE_CONFIG_BACKUP_PATH_LABEL.normal.textColor = Color.yellow;
                }
             }
             else
             {
-               STYLE_BACKUP_PATH_FIELD.normal.textColor = Color.red;
-               STYLE_BACKUP_PATH_LABEL.normal.textColor = Color.red;
+               STYLE_CONFIG_BACKUP_PATH_FIELD.normal.textColor = Color.red;
+               STYLE_CONFIG_BACKUP_PATH_LABEL.normal.textColor = Color.red;
             }
-            GUILayout.Label("Backup path: ", STYLE_BACKUP_PATH_LABEL);
-            config.backupPath = FileOperations.ExpandBackupPath(GUILayout.TextField(config.backupPath, STYLE_BACKUP_PATH_FIELD));
+            GUILayout.Label("Backup path: ", STYLE_CONFIG_BACKUP_PATH_LABEL);
+            config.backupPath = FileOperations.ExpandBackupPath(GUILayout.TextField(config.backupPath, STYLE_CONFIG_BACKUP_PATH_FIELD));
             GUILayout.EndHorizontal();
+            // disabled
+            SAVE.configuration.disabled = GUILayout.Toggle(SAVE.configuration.disabled, " Backups temporary disabled");
             // async
             config.asynchronous = GUILayout.Toggle(config.asynchronous, " Asynchronous backup/restore");
             // recurse
@@ -484,23 +504,27 @@ namespace Nereid
             GUILayout.BeginHorizontal();
             BackupIntervalToggle(Configuration.BACKUP_INTERVAL.CUSTOM, "Custom (minutes)");
             GUILayout.FlexibleSpace();
-            String sCustomInterval = GUILayout.TextField(config.customBackupInterval.ToString(), STYLE_TEXTFIELD);
+            String sCustomInterval = GUILayout.TextField(config.customBackupInterval.ToString(), STYLE_CONFIG_TEXTFIELD);
+            GUILayout.Space(CONFIG_TEXTFIELD_RIGHT_MARGIN);
             config.customBackupInterval = ParseInt(sCustomInterval);
             GUILayout.EndHorizontal();
             GUILayout.EndVertical();
             GUILayout.BeginHorizontal();
             GUILayout.Label("Days to keep backups: ");
-            String sDaysToKeepBackups = GUILayout.TextField(config.daysToKeepBackups.ToString(), STYLE_TEXTFIELD);
+            String sDaysToKeepBackups = GUILayout.TextField(config.daysToKeepBackups.ToString(), STYLE_CONFIG_TEXTFIELD);
+            GUILayout.Space(CONFIG_TEXTFIELD_RIGHT_MARGIN);
             config.daysToKeepBackups = ParseInt(sDaysToKeepBackups);
             GUILayout.EndHorizontal();
             GUILayout.BeginHorizontal();
             GUILayout.Label("Min number of backups: ");
-            String sMinNumberOfbackups = GUILayout.TextField(config.minNumberOfBackups.ToString(), STYLE_TEXTFIELD);
+            String sMinNumberOfbackups = GUILayout.TextField(config.minNumberOfBackups.ToString(), STYLE_CONFIG_TEXTFIELD);
+            GUILayout.Space(CONFIG_TEXTFIELD_RIGHT_MARGIN);
             config.minNumberOfBackups = ParseInt(sMinNumberOfbackups);
             GUILayout.EndHorizontal();
             GUILayout.BeginHorizontal();
             GUILayout.Label("Max number of backups: ");
-            String sMaxNumberOfbackups = GUILayout.TextField(config.maxNumberOfBackups.ToString(), STYLE_TEXTFIELD);
+            String sMaxNumberOfbackups = GUILayout.TextField(config.maxNumberOfBackups.ToString(), STYLE_CONFIG_TEXTFIELD);
+            GUILayout.Space(CONFIG_TEXTFIELD_RIGHT_MARGIN);
             config.maxNumberOfBackups = ParseInt(sMaxNumberOfbackups);
             GUILayout.EndHorizontal();
          }

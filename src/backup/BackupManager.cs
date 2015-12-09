@@ -172,6 +172,12 @@ namespace Nereid
                SortBackupSets();
                CreateBackupSetNameArray();
             }
+            //
+            if (SAVE.configuration.disabled)
+            {
+               Log.Info("backup disabled");
+               return;
+            }
             TimeSpan elapsed = DateTime.Now - set.time;
             // 
             if (elapsed.Seconds <= 0)

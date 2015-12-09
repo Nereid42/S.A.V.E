@@ -27,6 +27,7 @@ namespace Nereid
          public bool asynchronous { get; set; }
          public int customBackupInterval { get; set; }
          public bool compressBackups { get; set; }
+         public bool disabled { get; set; }
 
          // non persistent, will reset to default every start of KSP
          public bool backupBeforeRestore { get; set; }
@@ -45,6 +46,7 @@ namespace Nereid
             backupBeforeRestore = true;
             asynchronous = false;
             compressBackups = false;
+            disabled = false;
          }
 
 

@@ -58,14 +58,21 @@ namespace Nereid
             this.gui.SetVisible(scene == GameScenes.MAINMENU);
             if (HighLogic.LoadedScene == GameScenes.SPACECENTER && scene == GameScenes.MAINMENU && configuration.backupInterval == Configuration.BACKUP_INTERVAL.ON_QUIT)
             {
-               String game = HighLogic.SaveFolder;
-               if(name!=null && name.Length>0)
+               if (!SAVE.configuration.disabled)
                {
-                  manager.BackupGame(game);
+                  String game = HighLogic.SaveFolder;
+                  if (name != null && name.Length > 0)
+                  {
+                     manager.BackupGame(game);
+                  }
+                  else
+                  {
+                     Log.Warning("failed to save game on quit");
+                  }
                }
                else
                {
-                  Log.Warning("failed to save game on quit");
+                  Log.Info("backup on quit disabled");
                }
             }
          }
