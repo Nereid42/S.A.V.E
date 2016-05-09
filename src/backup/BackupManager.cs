@@ -251,7 +251,6 @@ namespace Nereid
             }
             // wait for job to complete, to avoid concurrency problems 
             WaitUntilBackupJobCompleted(job);
-
          }
 
          private void WaitUntilBackupJobCompleted(BackupJob job)
