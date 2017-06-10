@@ -35,6 +35,8 @@ namespace Nereid
          private GUIStyle STYLE_CONFIG_BACKUP_PATH_FIELD = null;
          private GUIStyle STYLE_CONFIG_TEXTFIELD = null;
 
+         private GUIStyle STYLE_DELETE_BUTTON = null;
+
 
          private int selectedGameToRestore = 0;
          private int selectedBackupToRestore = 0;
@@ -234,6 +236,8 @@ namespace Nereid
 
          private void DisplayRestore()
          {
+            InitStyles();
+
             String[] games = SAVE.manager.GetBackupSetNameArray();
 
             GUILayout.BeginVertical();
@@ -252,7 +256,10 @@ namespace Nereid
             SAVE.configuration.backupBeforeRestore = GUILayout.Toggle(SAVE.configuration.backupBeforeRestore, " Create a backup before restore");
             SAVE.configuration.disabled = GUILayout.Toggle(SAVE.configuration.disabled, " Temporary disable backups until restart");
             GUILayout.BeginHorizontal();
-            GUILayout.Label("");
+            GUI.enabled = backups.Length > 0;
+            GUILayout.Button("Delete",STYLE_DELETE_BUTTON);
+            GUI.enabled = true;
+            GUILayout.Button("Erase Backup", STYLE_DELETE_BUTTON);
             GUILayout.FlexibleSpace();
             if(GUILayout.Button("Cancel"))
             {
@@ -325,6 +332,19 @@ namespace Nereid
                STYLE_CONFIG_TEXTFIELD.stretchWidth = false;
                STYLE_CONFIG_TEXTFIELD.fixedWidth = 60;
                //STYLE_CONFIG_TEXTFIELD.margin = new RectOffset(0,200,0,0);
+            }
+            if (STYLE_DELETE_BUTTON == null)
+            {
+               STYLE_DELETE_BUTTON = new GUIStyle(GUI.skin.button);
+               Color orange = new Color(255, 150, 60);
+               STYLE_DELETE_BUTTON.normal.textColor = orange;
+               STYLE_DELETE_BUTTON.active.textColor = orange;
+               STYLE_DELETE_BUTTON.hover.textColor = orange;
+               STYLE_DELETE_BUTTON.focused.textColor = orange;
+               STYLE_DELETE_BUTTON.onNormal.textColor = orange;
+               STYLE_DELETE_BUTTON.onActive.textColor = orange;
+               STYLE_DELETE_BUTTON.onHover.textColor = orange;
+               STYLE_DELETE_BUTTON.onFocused.textColor = orange;
             }
          }
 
