@@ -45,6 +45,7 @@ namespace Nereid
          private bool cloneBackups = false;
          private bool cloneFromBackupEnabled = false;
          private bool cloneFromBackup = false;
+         private bool deleteBackups = false;
 
          // for All backup dialog
          private int backupCount = 0;
@@ -257,9 +258,18 @@ namespace Nereid
             SAVE.configuration.disabled = GUILayout.Toggle(SAVE.configuration.disabled, " Temporary disable backups until restart");
             GUILayout.BeginHorizontal();
             GUI.enabled = backups.Length > 0;
-            GUILayout.Button("Delete",STYLE_DELETE_BUTTON);
+            deleteBackups = GUILayout.Toggle(deleteBackups,"");
+            GUI.enabled = backups.Length > 0 && deleteBackups;
+            if (GUILayout.Button("Delete",STYLE_DELETE_BUTTON))
+            {
+               SAVE.manager.DeleteBackup(backupSet, backup);
+            }
+            if(GUILayout.Button("Erase Backup", STYLE_DELETE_BUTTON))
+            {
+               SAVE.manager.EraseBackupSet(backupSet);
+               display = DISPLAY.HIDDEN;
+            }
             GUI.enabled = true;
-            GUILayout.Button("Erase Backup", STYLE_DELETE_BUTTON);
             GUILayout.FlexibleSpace();
             if(GUILayout.Button("Cancel"))
             {

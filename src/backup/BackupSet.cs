@@ -450,6 +450,23 @@ namespace Nereid
             return null;
          }
 
+         public void DeleteBackup(String backup)
+         {
+            Log.Info("deleting backup '" + backup + "' from backupset '" + name + "'");
+            String backupRootFolder = SAVE.configuration.backupPath + "/" + name;
+            String backupFolder = backupRootFolder + "/" + backup;
+            FileOperations.DeleteDirectory(backupFolder);
+            backups.Remove(backup);
+            CreateBackupArray();
+         }
+
+         public void Delete()
+         {
+            Log.Info("deleting backupset '" + name + "'");
+            String backupRootFolder = SAVE.configuration.backupPath + "/" + name;
+            FileOperations.DeleteDirectory(backupRootFolder);
+         }
+
          public void Cleanup()
          {
             Log.Info("cleaning up backup "+name);
