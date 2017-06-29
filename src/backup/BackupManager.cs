@@ -483,6 +483,12 @@ namespace Nereid
          {
             if (backupSet == null) return;
             backupSet.Delete();
+            backupSets.Remove(backupSet);
+         }
+
+         public int NumberOfBackupSets()
+         {
+            return backupSets.Count;
          }
 
 

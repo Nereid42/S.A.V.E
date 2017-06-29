@@ -45,7 +45,7 @@ namespace Nereid
          private bool cloneBackups = false;
          private bool cloneFromBackupEnabled = false;
          private bool cloneFromBackup = false;
-         private bool deleteBackups = false;
+         private bool deleteEnabled = false;
 
          // for All backup dialog
          private int backupCount = 0;
@@ -81,18 +81,20 @@ namespace Nereid
 
             DISPLAY lastDisplay = display;
 
+            BackupManager manager = SAVE.manager;
+
             try
             {
                GUILayout.BeginVertical();
                GUILayout.BeginHorizontal();
-               GUI.enabled = SAVE.manager.RestoreCompleted() && SAVE.manager.BackupsCompleted();
+               GUI.enabled = manager.RestoreCompleted() && manager.BackupsCompleted() && manager.NumberOfBackupSets() > 0;
                if (GUILayout.Button("Backup All", GUI.skin.button))
                {
                   display = DISPLAY.BACKUP;
                   // don't start another backup if there is still a backup running
                   if (SAVE.manager.BackupsCompleted())
                   {
-                     backupCount = SAVE.manager.BackupAll();
+                     backupCount = manager.BackupAll();
                      backupCloseTime = DateTime.Now.AddSeconds(BACKUP_DISPLAY_REMAINS_OPEN_TIME);
                   }
                   else
@@ -102,10 +104,12 @@ namespace Nereid
                }
                GUI.enabled = true;
                // Restore
-               if(DrawDisplayToggle("Restore", DISPLAY.RESTORE) && !SAVE.manager.RestoreCompleted())
+               GUI.enabled = manager.NumberOfBackupSets() > 0;
+               if (DrawDisplayToggle("Restore", DISPLAY.RESTORE) && !SAVE.manager.RestoreCompleted() )
                {
                   display = DISPLAY.RESTORING;
                }
+               GUI.enabled = true;
                // Configure
                DrawDisplayToggle("Configure", DISPLAY.CONFIGURE);
                // Status
@@ -153,7 +157,7 @@ namespace Nereid
                }
                GUILayout.EndVertical();
 
-               if(display==DISPLAY.BACKUP && backupCloseTime < DateTime.Now && SAVE.manager.Queuedbackups()==0)
+               if(display==DISPLAY.BACKUP && backupCloseTime < DateTime.Now && manager.Queuedbackups()==0)
                {
                   display = DISPLAY.HIDDEN;
                }
@@ -258,22 +262,24 @@ namespace Nereid
             SAVE.configuration.disabled = GUILayout.Toggle(SAVE.configuration.disabled, " Temporary disable backups until restart");
             GUILayout.BeginHorizontal();
             GUI.enabled = backups.Length > 0;
-            deleteBackups = GUILayout.Toggle(deleteBackups,"");
-            GUI.enabled = backups.Length > 0 && deleteBackups;
+            deleteEnabled = GUILayout.Toggle(deleteEnabled,"");
+            GUI.enabled = backups.Length > 0 && deleteEnabled;
             if (GUILayout.Button("Delete",STYLE_DELETE_BUTTON))
             {
                SAVE.manager.DeleteBackup(backupSet, backup);
             }
-            if(GUILayout.Button("Erase Backup", STYLE_DELETE_BUTTON))
+            if (GUILayout.Button("Erase Backup", STYLE_DELETE_BUTTON))
             {
                SAVE.manager.EraseBackupSet(backupSet);
                display = DISPLAY.HIDDEN;
+               deleteEnabled = false;
             }
             GUI.enabled = true;
             GUILayout.FlexibleSpace();
             if(GUILayout.Button("Cancel"))
             {
                display = DISPLAY.HIDDEN;
+               deleteEnabled = false;
             }
             GUI.enabled = backups.Length>0;
             if(GUILayout.Button("RESTORE"))
@@ -281,6 +287,7 @@ namespace Nereid
                if(SAVE.manager.RestoreGame(game, backup))
                {
                   display = DISPLAY.RESTORING;
+                  deleteEnabled = false;
                }
             }
             GUI.enabled = true;
@@ -296,7 +303,7 @@ namespace Nereid
             {
                STYLE_BACKUPSET_STATUS_NAME = new GUIStyle(GUI.skin.label);
                STYLE_BACKUPSET_STATUS_NAME.stretchWidth = false;
-               STYLE_BACKUPSET_STATUS_NAME.fixedWidth = 234;
+               STYLE_BACKUPSET_STATUS_NAME.fixedWidth = 229;
                STYLE_BACKUPSET_STATUS_NAME.wordWrap = false;
             }
             if (STYLE_BACKUPSET_CLONE_NAME == null)
@@ -311,7 +318,7 @@ namespace Nereid
                STYLE_BACKUPSET_STATUS = new GUIStyle(GUI.skin.label);
                STYLE_BACKUPSET_STATUS.stretchWidth = false;
                STYLE_BACKUPSET_STATUS.margin = new RectOffset(15, 0, 4, 0);
-               STYLE_BACKUPSET_STATUS.fixedWidth = 60;
+               STYLE_BACKUPSET_STATUS.fixedWidth = 65;
             }
             if (STYLE_RECOVER_BUTTON == null)
             {
