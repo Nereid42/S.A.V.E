@@ -41,6 +41,8 @@ namespace Nereid
          private String selectedGameToClone = "";
          private String cloneGameInto = "";
          private bool cloneBackups = false;
+         private bool cloneFromBackupEnabled = false;
+         private bool cloneFromBackup = false;
 
          // for All backup dialog
          private int backupCount = 0;
@@ -331,10 +333,18 @@ namespace Nereid
             InitStyles();
             //
             //
-            DrawTitle("Cloning game from backup");
+            DrawTitle("Cloning");
             GUILayout.BeginHorizontal();
-            GUILayout.Label("Cloning ");
+            GUILayout.Label("Game ");
             GUILayout.Label(selectedGameToClone, STYLE_BACKUPSET_CLONE_NAME);
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("From  ");
+            cloneFromBackup = ! GUILayout.Toggle(!cloneFromBackup, " game  ");
+            GUI.enabled = cloneFromBackupEnabled;
+            cloneFromBackup = GUILayout.Toggle(cloneFromBackup, " backup  ");
+            GUI.enabled = true;
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
             GUILayout.BeginHorizontal();
@@ -352,7 +362,9 @@ namespace Nereid
             STYLE_NAME_TEXTFIELD.normal.textColor = Color.white;
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
+            GUI.enabled = cloneFromBackupEnabled;
             cloneBackups = GUILayout.Toggle(cloneBackups, "Include backups");
+            GUI.enabled = true;
             GUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
             GUI.enabled = !cloneExists;
@@ -360,8 +372,15 @@ namespace Nereid
             {
                display = DISPLAY.HIDDEN;
                String backupRootFolder = SAVE.configuration.backupPath + "/" + name;
-               SAVE.manager.CloneGame(selectedGameToClone, cloneGameInto);
-               if(cloneBackups)
+               if(cloneFromBackup)
+               {
+                  SAVE.manager.CloneGameFromBackup(selectedGameToClone, cloneGameInto);
+               }
+               else
+               {
+                  SAVE.manager.CloneGame(selectedGameToClone, cloneGameInto);
+               }
+               if (cloneBackups)
                {
                   SAVE.manager.CloneBackup(selectedGameToClone, cloneGameInto);
                }
@@ -369,7 +388,7 @@ namespace Nereid
             GUI.enabled = true;
             if (GUILayout.Button("Cancel", GUI.skin.button))
             {
-               display = DISPLAY.HIDDEN;
+               display = DISPLAY.CLONE;
             }
             GUILayout.EndHorizontal();
          }
@@ -385,10 +404,11 @@ namespace Nereid
                GUILayout.BeginHorizontal();
                GUILayout.Label(set.name, STYLE_BACKUPSET_CLONE_NAME);
                GUILayout.FlexibleSpace();
-               GUI.enabled = set.Latest() != null;
                if (GUILayout.Button("Clone", STYLE_RECOVER_BUTTON))
                {
                   selectedGameToClone = set.name;
+                  cloneFromBackupEnabled = set.Latest() != null;
+                  cloneFromBackup = cloneFromBackupEnabled;
                   cloneGameInto = set.name + "-clone";
                   display = DISPLAY.CLONING;
                }

@@ -310,7 +310,7 @@ namespace Nereid
             return BackupGame(set);
          }
 
-         public void CloneGame(String game, String into)
+         public void CloneGameFromBackup(String game, String into)
          {
             Log.Info("cloning game from backup of '"+game+"' into '"+into+"'");
             BackupSet set = GetBackupSetForName(game);
@@ -339,6 +339,28 @@ namespace Nereid
                Log.Error("cloning of game failed: no backup set '" + game + "' found");
             }
          }
+
+         public void CloneGame(String game, String into)
+         {
+            String from = SAVE_ROOT + "/" + game;
+            String to = SAVE_ROOT + "/" + into;
+            Log.Info("cloning game from '" + from + "' into '" + into + "'");
+            if (FileOperations.DirectoryExists(from))
+            {
+               if (FileOperations.DirectoryExists(to))
+               {
+                  Log.Error("cloning of game failed: target folder exists");
+                  return;
+               }
+               FileOperations.CopyDirectory(from, to);
+               ScanSavegames();
+            }
+            else
+            {
+               Log.Error("cloning of game failed: no save game folder to clone");
+            }
+         }
+
 
          public void CloneBackup(String game, String into)
          {
