@@ -472,6 +472,25 @@ namespace Nereid
             return restoreCompleted;
          }
 
+         public void DeleteBackup(BackupSet backupSet, String backup)
+         {
+            if (backupSet == null) return;
+            if (backup == null || backup.Length == 0) return;
+            backupSet.DeleteBackup(backup);
+         }
+
+         public void EraseBackupSet(BackupSet backupSet)
+         {
+            if (backupSet == null) return;
+            backupSet.Delete();
+            backupSets.Remove(backupSet);
+         }
+
+         public int NumberOfBackupSets()
+         {
+            return backupSets.Count;
+         }
+
 
          public System.Collections.IEnumerator GetEnumerator()
          {

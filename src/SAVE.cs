@@ -35,6 +35,7 @@ namespace Nereid
             Log.SetLevel(Log.LEVEL.INFO);
             Log.Info("start");
             configuration.Load();
+            S.A.V.E.src.util.io.ConfigNodeIO.LoadData();
             Log.SetLevel(configuration.logLevel);
             if (this.gui == null)
             {
@@ -80,6 +81,8 @@ namespace Nereid
          internal void OnDestroy()
          {
             Log.Info("destroying S.A.V.E");
+            S.A.V.E.src.util.io.ConfigNodeIO.excludes.Clear();
+            S.A.V.E.src.util.io.ConfigNodeIO.excludes = null;
             configuration.Save();
             manager.Stop();
          }
