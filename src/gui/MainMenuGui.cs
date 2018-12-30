@@ -66,7 +66,10 @@ namespace Nereid
                if (visible)
                {
                   this.bounds = GUILayout.Window(this.GetInstanceID(), this.bounds, this.Window, TITLE, HighLogic.Skin.window);
-                  bounds.x = Screen.width - bounds.width;
+                  if (S.A.V.E.src.util.io.ConfigNodeIO.fixedWindowUpperRight)
+                     bounds.x = Screen.width - bounds.width;
+                  if (S.A.V.E.src.util.io.ConfigNodeIO.fixedWindowUpperLeft)
+                     bounds.x = 0;
                }
             }
             catch (Exception e)
