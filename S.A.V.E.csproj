@@ -77,6 +77,7 @@
     <Compile Include="src\util\BlockingQueue.cs" />
     <Compile Include="src\util\Configuration.cs" />
     <Compile Include="src\util\io\CompressionConstants.cs" />
+    <Compile Include="src\util\io\ConfigNodeIO.cs" />
     <Compile Include="src\util\io\FileOperations.cs" />
     <Compile Include="src\util\Log.cs" />
   </ItemGroup>

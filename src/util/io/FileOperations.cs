@@ -70,7 +70,17 @@ namespace Nereid
          }
 
          public static void CopyDirectory(String from, String to)
-         {
+         {    
+                string dirName = new DirectoryInfo(from).Name;
+                
+                foreach (var e in S.A.V.E.src.util.io.ConfigNodeIO.excludes)
+                {
+                    if (dirName == e)
+                    {
+                        Log.Info("CopyDirectory, excluded directory found: " + dirName);
+                        return;
+                    }
+                }
             CheckPathForWriteOperation(to);
             Log.Info("copy directory " + from + " to " + to);
 
