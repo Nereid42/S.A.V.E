@@ -176,6 +176,8 @@ namespace Nereid
             {
                this.bounds.height = 0;
             }
+            if (S.A.V.E.src.util.io.ConfigNodeIO.fixedWindowFloating)
+                GUI.DragWindow();
          }
 
          private bool DrawDisplayToggle(String text, DISPLAY display)
