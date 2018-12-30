@@ -66,13 +66,12 @@ namespace Nereid
                if (visible)
                {
                   this.bounds = GUILayout.Window(this.GetInstanceID(), this.bounds, this.Window, TITLE, HighLogic.Skin.window);
-                        if (S.A.V.E.src.util.io.ConfigNodeIO.fixedWindowUpperRight)
-                            bounds.x = Screen.width - bounds.width;
-                        if (S.A.V.E.src.util.io.ConfigNodeIO.fixedWindowUpperLeft)
-                            bounds.x = 0;
-
-                    }
-                }
+                  if (S.A.V.E.src.util.io.ConfigNodeIO.fixedWindowUpperRight)
+                     bounds.x = Screen.width - bounds.width;
+                  if (S.A.V.E.src.util.io.ConfigNodeIO.fixedWindowUpperLeft)
+                     bounds.x = 0;
+               }
+            }
             catch (Exception e)
             {
                Log.Error("exception: "+e.Message);
@@ -109,7 +108,7 @@ namespace Nereid
                GUI.enabled = true;
                // Restore
                GUI.enabled = manager.NumberOfBackupSets() > 0;
-               if(DrawDisplayToggle("Restore", DISPLAY.RESTORE) && !SAVE.manager.RestoreCompleted())
+               if (DrawDisplayToggle("Restore", DISPLAY.RESTORE) && !SAVE.manager.RestoreCompleted() )
                {
                   display = DISPLAY.RESTORING;
                }
@@ -177,8 +176,6 @@ namespace Nereid
             {
                this.bounds.height = 0;
             }
-                if (S.A.V.E.src.util.io.ConfigNodeIO.fixedWindowFloating)
-                    GUI.DragWindow();
          }
 
          private bool DrawDisplayToggle(String text, DISPLAY display)
