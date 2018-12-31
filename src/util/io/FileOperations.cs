@@ -69,19 +69,28 @@ namespace Nereid
             File.Copy(from, to);
          }
 
-         public static void CopyDirectory(String from, String to)
+         public static void CopyDirectory(String from, String to, String excludemarkerfile = ".nobackup")
          {    
-                string dirName = new DirectoryInfo(from).Name;
-                
-                foreach (var e in S.A.V.E.src.util.io.ConfigNodeIO.excludes)
-                {
-                    if (dirName == e)
-                    {
-                        Log.Info("CopyDirectory, excluded directory found: " + dirName);
-                        return;
-                    }
-                }
+            if (FileExists(from+"/"+excludemarkerfile))
+            {
+               Log.Info("directory '" + from + "' excluded from backup (marked by file)");
+               return;
+            }
+            Log.Detail("no exclude marker file '"+ excludemarkerfile+"' found in folder '"+from+"'");
+
+            string dirName = new DirectoryInfo(from).Name;
+            foreach (var e in S.A.V.E.src.util.io.ConfigNodeIO.excludes)
+            {
+               if (dirName == e)
+               {
+                  Log.Info("directory '" + dirName + "' excluded from backup (excluded by config)");
+                  return;
+               }
+            }
+            Log.Detail("folder '" + from + "' not in exclude list");
+
             CheckPathForWriteOperation(to);
+
             Log.Info("copy directory " + from + " to " + to);
 
             // create target directory if not existient
