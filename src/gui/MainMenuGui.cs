@@ -587,6 +587,14 @@ namespace Nereid
             GUILayout.Space(CONFIG_TEXTFIELD_RIGHT_MARGIN);
             config.maxNumberOfBackups = ParseInt(sMaxNumberOfbackups);
             GUILayout.EndHorizontal();
+            GUILayout.BeginHorizontal();
+            GUILayout.FlexibleSpace();
+            if (GUILayout.Button("Save Config", GUI.skin.button))
+            {
+               config.Save();
+               display = DISPLAY.HIDDEN;
+            }
+            GUILayout.EndHorizontal();
          }
 
          private int ParseInt(String s)
