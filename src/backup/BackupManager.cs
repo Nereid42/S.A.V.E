@@ -327,6 +327,23 @@ namespace Nereid
                      return;
                   }
                   FileOperations.CopyDirectory(from, to);
+                  // uncompress all compressed files
+                  if (!FileOperations.DecompressFolder(to))
+                  {
+                     Log.Error("failed to decompress files");
+                  }
+                  // remove backup.ok and backup restored files
+                  String backup_ok_file = to + "/backup.ok";
+                  String backup_restored_file = to + "/backup.restored";
+                  try
+                  {
+                     if (FileOperations.FileExists(backup_ok_file)) FileOperations.DeleteFile(backup_ok_file);
+                     if (FileOperations.FileExists(backup_restored_file)) FileOperations.DeleteFile(backup_restored_file);
+                  }
+                  catch
+                  {
+                     Log.Warning("could not delete " + backup_ok_file + " or " + backup_restored_file);
+                  }
                   ScanSavegames();
                }
                else

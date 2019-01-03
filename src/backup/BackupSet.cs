@@ -387,7 +387,7 @@ namespace Nereid
             String backupRootFolder = SAVE.configuration.backupPath + "/" + name;
             try 
             {
-               // restore befor backup?
+               // restore before backup?
                if (SAVE.configuration.backupBeforeRestore)
                {
                   if (FileOperations.DirectoryExists(pathSaveGame))

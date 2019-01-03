@@ -403,7 +403,7 @@ namespace Nereid
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
             GUI.enabled = cloneFromBackupEnabled;
-            cloneBackups = GUILayout.Toggle(cloneBackups, "Include backups");
+            cloneBackups = GUILayout.Toggle(cloneBackups, "Including backups");
             GUI.enabled = true;
             GUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
