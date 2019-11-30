@@ -37,6 +37,9 @@ namespace S.A.V.E.src.util.io
                         string fixedWindowPos = dataNode.GetValue("WindowPos");
                         if (fixedWindowPos != null)
                         {
+                            // Set this false here because it is initialized to true
+                            fixedWindowUpperRight = false;
+
                             fixedWindowUpperRight = (fixedWindowPos == "upperRight");
                             fixedWindowUpperLeft = (fixedWindowPos == "upperLeft");
                             fixedWindowFloating = (fixedWindowPos == "floating");
@@ -46,12 +49,17 @@ namespace S.A.V.E.src.util.io
                             if (!fixedWindowUpperRight && !fixedWindowUpperLeft && !fixedWindowFloating)
                                 fixedWindowUpperRight = true;
                         }
-                        
+
                         excludes = dataNode.GetValuesList(EXCLUDE);
+                        foreach (var s in excludes)
+                            Nereid.SAVE.Log.Info("Exclude: " + s);
                     }
                 }
             }
-            excludes = new List<string>();
+            else
+            {
+                excludes = new List<string>();
+            }
         }
 
 #if false

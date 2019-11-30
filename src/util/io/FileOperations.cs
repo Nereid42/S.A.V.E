@@ -71,6 +71,8 @@ namespace Nereid
 
          public static void CopyDirectory(String from, String to, String excludemarkerfile = ".nobackup")
          {    
+            Log.Info("CopyDirectory, from: " + from + ", to: " + to);
+           
             if (FileExists(from+"/"+excludemarkerfile))
             {
                Log.Info("directory '" + from + "' excluded from backup (marked by file)");
