@@ -41,7 +41,7 @@ namespace Nereid
 
          public BackupManager()
          {
-            Log.Info("new instance of backup manager (save root is "+SAVE_ROOT+")");
+            Log.Info("new instance of backup manager (save root is '"+SAVE_ROOT+"')");
             this.backupThread = new Thread(new ThreadStart(this.BackupWork));
             this.restoreThread = new Thread(new ThreadStart(this.RestoreWork));
          }
@@ -102,7 +102,7 @@ namespace Nereid
             }
             else
             {
-               Log.Detail("save game " + name + " is build in and ignored");
+               Log.Detail("save game '" + name + "' is buildin and ignored");
             }
          }
 
@@ -114,12 +114,12 @@ namespace Nereid
                // scan save games
                foreach (String folder in Directory.GetDirectories(SAVE_ROOT))
                {
-                  Log.Info("save game found: "+folder);
+                  Log.Info("save game found: '"+folder+"'");
                   String name = Path.GetFileName(folder);
 
                   if (GetBackupSetForName(name)==null)
                   {
-                     Log.Detail("adding backup set " + name);
+                     Log.Detail("adding backup set '" + name+"'");
                      AddBackup(name, folder);
                   }
                }
@@ -130,7 +130,7 @@ namespace Nereid
                   BackupSet set = GetBackupSetForName(name);
                   if(set==null)
                   {
-                     Log.Detail("adding backup set "+name+" (save game was deleted)");
+                     Log.Detail("adding backup set '"+name+"' (save game was deleted)");
                      AddBackup(name, SAVE_ROOT+"/"+name);
                   }
                }

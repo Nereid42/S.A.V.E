@@ -13,7 +13,7 @@ namespace Nereid
          public static readonly BackupManager manager = new BackupManager();
 
          static SAVE()
-         {
+         {            
          }
 
          private MainMenuGui gui;
