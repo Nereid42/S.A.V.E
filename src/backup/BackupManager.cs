@@ -38,7 +38,6 @@ namespace Nereid
          private volatile bool restoreCompleted = true;
          private volatile String restoredGame;
 
-
          public BackupManager()
          {
             Log.Info("new instance of backup manager (save root is '"+SAVE_ROOT+"')");
@@ -67,7 +66,7 @@ namespace Nereid
                BackupJob job = backupQueue.Dequeue();
                Log.Info("executing backup job " + job);
                job.Backup();
-               allBackupsCompleted = backupQueue.Size() == 0;
+               allBackupsCompleted = ( backupQueue.Size() == 0 );
             }
             Log.Info("backup thread terminated");
          }
@@ -82,7 +81,7 @@ namespace Nereid
                job.Restore();
                // wait at least 2 seconds;
                Thread.Sleep(MILLIS_RESTORE_WAIT);
-               restoreCompleted = restoreQueue.Size() == 0;
+               restoreCompleted = ( restoreQueue.Size() == 0 );
             }
             Log.Info("restore thread terminated");
          }
@@ -160,9 +159,17 @@ namespace Nereid
             return null;
          }
 
+         public void CallbackGameSave(ConfigNode node)
+         {
+            Log.Info("callback: game about to save");
+            WaitUntilAllCompleted();
+            Log.Info("all backups completed before save");
+         }
 
          public void CallbackGameSaved(Game game)
          {
+            Log.Info("callback: game saved");
+
             String name = HighLogic.SaveFolder;
             BackupSet set = GetBackupSetForName(name);
             if(set==null)
@@ -249,16 +256,16 @@ namespace Nereid
                   job = BackupGame(set);
                   break;
             }
-            // wait for job to complete, to avoid concurrency problems 
-            WaitUntilBackupJobCompleted(job);
          }
 
-         private void WaitUntilBackupJobCompleted(BackupJob job)
+         private void WaitUntilAllCompleted()
          {
-            while (!job.IsCompleted() && !stopRequested)
+            if (!allBackupsCompleted) Log.Detail("waiting for backups to complete...");
+            while (!allBackupsCompleted)
             {
                Thread.Sleep(100);
             }
+            if (!allBackupsCompleted) Log.Detail("all backups completed");
          }
 
          public int BackupAll()

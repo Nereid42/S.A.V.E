@@ -52,6 +52,7 @@ namespace Nereid
             Log.Info("registering events");
             GameEvents.onGameStateSaved.Add(manager.CallbackGameSaved);
             GameEvents.onGameSceneLoadRequested.Add(this.CallbackGameSceneLoadRequested);
+            GameEvents.onGameStateSave.Add(manager.CallbackGameSave);
          }
 
          private void CallbackGameSceneLoadRequested(GameScenes scene)
