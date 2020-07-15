@@ -66,15 +66,22 @@ namespace Nereid
                if (visible)
                {
                   this.bounds = GUILayout.Window(this.GetInstanceID(), this.bounds, this.Window, TITLE, HighLogic.Skin.window);
-                  if (S.A.V.E.src.util.io.ConfigNodeIO.fixedWindowUpperRight)
+
+                        if (SAVE.configuration.windowPosition == Configuration.WindowPos.UpperRight)
+                        {
                      bounds.x = Screen.width - bounds.width;
-                  if (S.A.V.E.src.util.io.ConfigNodeIO.fixedWindowUpperLeft)
+                            bounds.y = 0;
+                        }
+                        if (SAVE.configuration.windowPosition == Configuration.WindowPos.UpperLeft)
+                        {
                      bounds.x = 0;
+                            bounds.y = 0;
+                        }
                }
             }
             catch (Exception e)
             {
-               Log.Error("exception: "+e.Message);
+                    Log.Error("OnGUI exception: " + e.Message);
             }
          }
 
@@ -168,7 +175,7 @@ namespace Nereid
             }
             catch (Exception e)
             {
-               Log.Error("exception: " + e.Message);
+                    Log.Error("Window exception: " + e.Message);
             }
 
             // resize GUI if display changes
@@ -176,6 +183,8 @@ namespace Nereid
             {
                this.bounds.height = 0;
             }
+                if (SAVE.configuration.windowPosition == Configuration.WindowPos.Floating)
+                        GUI.DragWindow();
          }
 
          private bool DrawDisplayToggle(String text, DISPLAY display)
@@ -550,6 +559,16 @@ namespace Nereid
             // compress
             // not working right now
             config.compressBackups = GUILayout.Toggle(config.compressBackups, " Compress backups");
+            
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(15);
+            GUILayout.Label("Window Position:");
+
+            WindowPositionToggle(Configuration.WindowPos.UpperRight, "Upper Right");
+            WindowPositionToggle(Configuration.WindowPos.UpperLeft, "Upper Left");
+            WindowPositionToggle(Configuration.WindowPos.Floating, "Floating");
+            //GUILayout.EndVertical();
+            GUILayout.EndHorizontal();
             // interval
             GUILayout.Label("Backup interval: ");
             BackupIntervalToggle(Configuration.BACKUP_INTERVAL.ON_QUIT, "On quit");
@@ -617,6 +636,13 @@ namespace Nereid
                SAVE.configuration.backupInterval = interval;
             }
          }
+            private void WindowPositionToggle(Configuration.WindowPos winPos, string text)
+            {
+                if (GUILayout.Toggle(SAVE.configuration.windowPosition == winPos, " " + text))
+                {
+                    SAVE.configuration.windowPosition = winPos;
+                }
+            }
 
          private void LogLevelButton(Log.LEVEL level, String text)
          {
